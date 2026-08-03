@@ -33,7 +33,7 @@
         integrity="sha512-mQ77VzAakzdpWdgfL/lM1ksNy89uFgibRQANsNneSTMD/bj0Y/8+94XMwYhnbzx8eki2hrbPpDm0vD0CiT2lcg==" crossorigin="anonymous" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css"
         integrity="sha512-6ZCLMiYwTeli2rVh3XAPxy3YoR5fVxGdH/pz+KMCzRY2M65Emgkw00Yqmhh8qLGeYQ3LbVZGdmOX9KUjSKr0TA==" crossorigin="anonymous" />
-  <link rel="stylesheet" href="styles.css?v=19">
+  <link rel="stylesheet" href="styles.css?v=20">
 
   <title>Mappa - Pepite per Tutti</title>
   
@@ -206,6 +206,11 @@
               <span class="section-label" id="listTitle">Tutte le Pepite</span>
               <span class="list-count" id="listCount">0 risultati</span>
             </div>
+            <!-- Shown only on the Preferiti view — points to the day-plan builder -->
+            <button class="myday-hint" id="pepiteMyDayHint" style="display:none">
+              <span class="myday-hint-icon">🗓️</span>
+              <span id="pepiteMyDayHintText">Componi un itinerario con i tuoi preferiti → La mia giornata</span>
+            </button>
             <div class="pepite-list" id="pepiteList"></div>
           </div>
         </div>
@@ -257,6 +262,20 @@
             <span class="section-label" id="eventiListTitle">Tutti gli Eventi</span>
             <span class="list-count" id="eventiListCount">0 eventi</span>
           </div>
+
+          <!-- "Vicino a me" is set from the Pepite tab but also sorts/badges eventi — surface it here too -->
+          <div class="eventi-nearme-badge" id="eventiNearMeBadge" style="display:none">
+            <span>📍 <span id="eventiNearMeBadgeText">Ordinati per vicinanza</span></span>
+            <button id="eventiNearMeBadgeClear" aria-label="Disattiva Vicino a me">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          </div>
+
+          <!-- Shown only on the Preferiti view — points to the day-plan builder -->
+          <button class="myday-hint" id="eventiMyDayHint" style="display:none">
+            <span class="myday-hint-icon">🗓️</span>
+            <span id="eventiMyDayHintText">Componi un itinerario con i tuoi preferiti → La mia giornata</span>
+          </button>
 
           <div class="eventi-list" id="eventiList"></div>
         </div>
@@ -481,6 +500,6 @@
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"
           integrity="sha512-OFs3W4DIZ5ZkrDhBFtsCP6JXtMEDGmhl0QPlmWYBJay40TT1n3gt2Xuw8Pf/iezgW9CdabjkNChRqozl/YADmg==" crossorigin="anonymous"></script>
-  <script src="app.js?v=85"></script>
+  <script src="app.js?v=86"></script>
 </body>
 </html>

@@ -129,6 +129,7 @@ const i18n = {
     myDayEmptyTitle: 'Ancora nessuna tappa salvata',
     myDayEmptyText: 'Salva pepite ed eventi con il cuore ♥ per aggiungerli qui e comporre il tuo itinerario.',
     myDayShareText: (tappe) => `🗺️ La mia giornata a Milano\n📍 ${tappe}\n\nScopri le pepite di Milano →`,
+    myDayHint: 'Componi un itinerario con i tuoi preferiti → La mia giornata',
     eventiTitle: 'Eventi del Mese',
     eventiDesc: () => `${getEventiPeriod('it')} — gli appuntamenti imperdibili a Milano.`,
     eventiSearchPlaceholder: 'Cerca eventi...',
@@ -159,6 +160,7 @@ const i18n = {
     nearMeYouAreHere: 'Sei qui',
     nearMeError: 'Impossibile ottenere la posizione.',
     nearMeUnsupported: 'Geolocalizzazione non supportata.',
+    nearMeEventiBadge: 'Ordinati per vicinanza',
     linkedEventsLabel: '🗓 In programma qui',
     linkedPepitaLabel: '✨ Pepita correlata',
     install: 'Installa Milano Pepite sulla Home',
@@ -323,6 +325,7 @@ const i18n = {
     myDayEmptyTitle: 'No stops saved yet',
     myDayEmptyText: 'Save gems and events with the heart ♥ to add them here and build your itinerary.',
     myDayShareText: (tappe) => `🗺️ My Day in Milan\n📍 ${tappe}\n\nDiscover Milan's hidden gems →`,
+    myDayHint: 'Build a plan from your favourites → My Day Plan',
     eventiTitle: 'Monthly Events',
     eventiDesc: () => `${getEventiPeriod('en')} — unmissable events in Milan.`,
     eventiSearchPlaceholder: 'Search events...',
@@ -353,6 +356,7 @@ const i18n = {
     nearMeYouAreHere: 'You are here',
     nearMeError: 'Could not get your location.',
     nearMeUnsupported: 'Geolocation not supported.',
+    nearMeEventiBadge: 'Sorted by distance',
     linkedEventsLabel: '🗓 Happening here',
     linkedPepitaLabel: '✨ Related Gem',
     install: 'Install Milano Pepite on Home Screen',
@@ -510,6 +514,22 @@ const onboardingSlides = [
   { emoji: '🔍',  titleKey: 'onbTitle4', textKey: 'onbText4' }
 ];
 let onboardingIdx = 0;
+let _onboardingPending = false; // true once the first-launch tour is scheduled/showing
+
+/** True if this browser shows any sign of prior use — keys that only ever get
+ *  written in response to a real user action, never on page load. Used so the
+ *  "welcome" tour isn't shown to people who already used the app before it existed. */
+function _isReturningUser() {
+  try {
+    return !!(
+      localStorage.getItem('ga_consent') ||
+      localStorage.getItem('pepite_saved') ||
+      localStorage.getItem('eventi_saved') ||
+      localStorage.getItem('pepite_filter') ||
+      localStorage.getItem('pepite_lang')
+    );
+  } catch { return false; }
+}
 
 function setupOnboarding() {
   document.getElementById('onboardingNext')?.addEventListener('click', () => {
@@ -530,7 +550,15 @@ function setupOnboarding() {
 
   let seen = false;
   try { seen = localStorage.getItem('pepite_onboarding_seen') === '1'; } catch { seen = false; }
+
+  if (!seen && _isReturningUser()) {
+    // Pre-existing users predate this feature — treat them as already onboarded, not first-timers
+    seen = true;
+    safeLocalStorageSet('pepite_onboarding_seen', '1');
+  }
+
   if (!seen) {
+    _onboardingPending = true;
     // Show right after the splash fades out
     setTimeout(openOnboarding, 1500);
   }
@@ -551,6 +579,9 @@ function closeOnboarding() {
   overlay.style.display = 'none';
   document.body.style.overflow = '';
   safeLocalStorageSet('pepite_onboarding_seen', '1');
+  _onboardingPending = false;
+  // The GA consent banner deferred itself while the tour was up — trigger it now, sequenced.
+  maybeShowGaBanner(500);
 }
 
 function renderOnboardingSlide() {
@@ -628,11 +659,9 @@ function setupAnalyticsConsent() {
   if (consent === 'yes') { window._initGA?.(); return; }
   if (consent === 'no') return;
 
-  // No stored preference — show banner after splash finishes (≈1.2 s)
+  // No stored preference — wire up the banner, but let maybeShowGaBanner() decide *when* to reveal it
   const banner = document.getElementById('gaConsentBanner');
   if (!banner) return;
-
-  setTimeout(() => { banner.style.display = ''; }, 1200);
 
   document.getElementById('gaBtnAccept')?.addEventListener('click', () => {
     localStorage.setItem('ga_consent', 'yes');
@@ -644,6 +673,21 @@ function setupAnalyticsConsent() {
     localStorage.setItem('ga_consent', 'no');
     banner.style.display = 'none';
   });
+
+  // Don't compete with the first-launch onboarding tour for attention — if it's about to show,
+  // closeOnboarding() will call maybeShowGaBanner() once the user is done with it instead.
+  if (!_onboardingPending) {
+    maybeShowGaBanner(1200);
+  }
+}
+
+/** Reveal the GA consent banner after `delay` ms, unless consent is already decided or it's already showing. */
+function maybeShowGaBanner(delay = 0) {
+  const consent = localStorage.getItem('ga_consent');
+  if (consent === 'yes' || consent === 'no') return;
+  const banner = document.getElementById('gaConsentBanner');
+  if (!banner || banner.style.display === '') return; // already visible
+  setTimeout(() => { banner.style.display = ''; }, delay);
 }
 
 // ── HTML escaping ──
@@ -876,6 +920,10 @@ function applyLanguage() {
   if (myDayShowMapLabel) myDayShowMapLabel.textContent = t('myDayShowMap');
   const myDayShareLabel = document.getElementById('myDayShareLabel');
   if (myDayShareLabel) myDayShareLabel.textContent = t('myDayShare');
+  const pepiteMyDayHintText = document.getElementById('pepiteMyDayHintText');
+  if (pepiteMyDayHintText) pepiteMyDayHintText.textContent = t('myDayHint');
+  const eventiMyDayHintText = document.getElementById('eventiMyDayHintText');
+  if (eventiMyDayHintText) eventiMyDayHintText.textContent = t('myDayHint');
   const tabBtnStorie = document.getElementById('tabBtnStorie');
   if (tabBtnStorie) tabBtnStorie.textContent = t('storieTab');
   const storieTabTitle = document.getElementById('storieTabTitle');
@@ -1059,6 +1107,10 @@ function renderPepiteList() {
   };
   document.getElementById('listTitle').textContent = titles[currentFilter] || 'Pepite';
   document.getElementById('listCount').textContent = t('results', filtered.length);
+
+  // Point Preferiti visitors at the day-plan builder
+  const pepiteMyDayHint = document.getElementById('pepiteMyDayHint');
+  if (pepiteMyDayHint) pepiteMyDayHint.style.display = (currentFilter === 'fav' && filtered.length > 0) ? 'flex' : 'none';
 
   if (filtered.length === 0) {
     const query   = document.getElementById('searchInput')?.value.trim() || '';
@@ -1255,12 +1307,9 @@ function setupSidebar() {
   document.getElementById('sidebarClose')?.addEventListener('click', closeSidebar);
   backdrop?.addEventListener('click', closeSidebar);
 
-  // Mobile search button opens sidebar with focus on search
-  document.getElementById('mobileSearchBtn')?.addEventListener('click', () => {
-    sidebar.classList.add('open');
-    backdrop.classList.add('active');
-    setTimeout(() => document.getElementById('searchInput')?.focus(), 300);
-  });
+  // Mobile search button opens the cross-domain global search directly — it's a
+  // superset of the per-tab search and needs no extra tap through the hamburger menu.
+  document.getElementById('mobileSearchBtn')?.addEventListener('click', openGlobalSearch);
 }
 
 function closeSidebar() {
@@ -2874,6 +2923,16 @@ function setupMyDayPlan() {
     const items = getMyDayItems();
     if (items.length > 0) shareMyDay(items);
   });
+
+  // Contextual hints shown on the Preferiti view of Pepite/Eventi
+  document.getElementById('pepiteMyDayHint')?.addEventListener('click', () => {
+    navigator.vibrate?.(20);
+    openMyDay();
+  });
+  document.getElementById('eventiMyDayHint')?.addEventListener('click', () => {
+    navigator.vibrate?.(20);
+    openMyDay();
+  });
 }
 
 // ── Eventi del Mese ──
@@ -3127,6 +3186,8 @@ function setupEventiSearch() {
       input.focus();
     });
   }
+
+  document.getElementById('eventiNearMeBadgeClear')?.addEventListener('click', clearNearMe);
 }
 
 // ── Virtual scroll helpers ──
@@ -3219,6 +3280,18 @@ function renderEventi() {
     }
   }
   if (countEl) countEl.textContent = t('eventiResults', _evAllItems.length);
+
+  // "Vicino a me" is toggled from the Pepite tab but also re-sorts eventi — surface it here too
+  const nearMeBadge = document.getElementById('eventiNearMeBadge');
+  if (nearMeBadge) {
+    nearMeBadge.style.display = (nearMeActive && userLocation) ? 'flex' : 'none';
+    const badgeText = document.getElementById('eventiNearMeBadgeText');
+    if (badgeText) badgeText.textContent = t('nearMeEventiBadge');
+  }
+
+  // Point Preferiti visitors at the day-plan builder
+  const eventiMyDayHint = document.getElementById('eventiMyDayHint');
+  if (eventiMyDayHint) eventiMyDayHint.style.display = (currentEventFilter === 'fav' && _evAllItems.length > 0) ? 'flex' : 'none';
 
   if (_evAllItems.length === 0) {
     const query    = document.getElementById('eventiSearchInput')?.value.trim() || '';
@@ -4067,6 +4140,26 @@ function setupStoryViewer() {
 
 
 // ── Global Cross-Domain Search (pepite + eventi + itinerari + storie) ──
+function openGlobalSearch() {
+  const overlay = document.getElementById('globalSearchOverlay');
+  const input   = document.getElementById('globalSearchInput');
+  if (!overlay || !input) return;
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  renderGlobalSearchResults(input.value);
+  setTimeout(() => input.focus(), 50);
+  // Storie/eventi may not be loaded yet — load in background so results are complete
+  if (!eventiLoaded) loadEventiData();
+  if (!storieLoaded) loadStorieData();
+}
+
+function closeGlobalSearch() {
+  const overlay = document.getElementById('globalSearchOverlay');
+  if (!overlay) return;
+  overlay.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
 function setupGlobalSearch() {
   const btn      = document.getElementById('globalSearchBtn');
   const overlay  = document.getElementById('globalSearchOverlay');
@@ -4074,31 +4167,39 @@ function setupGlobalSearch() {
   const closeBtn = document.getElementById('globalSearchClose');
   if (!btn || !overlay || !input) return;
 
-  const open = () => {
-    overlay.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    renderGlobalSearchResults(input.value);
-    setTimeout(() => input.focus(), 50);
-    // Storie/eventi may not be loaded yet — load in background so results are complete
-    if (!eventiLoaded) loadEventiData();
-    if (!storieLoaded) loadStorieData();
-  };
-  const close = () => {
-    overlay.style.display = 'none';
-    document.body.style.overflow = '';
-  };
-
-  btn.addEventListener('click', open);
-  closeBtn?.addEventListener('click', close);
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  btn.addEventListener('click', openGlobalSearch);
+  closeBtn?.addEventListener('click', closeGlobalSearch);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeGlobalSearch(); });
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && overlay.style.display !== 'none') close();
+    if (e.key === 'Escape' && overlay.style.display !== 'none') closeGlobalSearch();
   });
 
   let debounceTimer;
   input.addEventListener('input', () => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => renderGlobalSearchResults(input.value), 150);
+  });
+
+  // Keyboard navigation: ↓/↑ move between results, Enter opens the focused (or first) one.
+  const resultsContainer = document.getElementById('globalSearchResults');
+  input.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp' && e.key !== 'Enter') return;
+    const results = resultsContainer ? Array.from(resultsContainer.querySelectorAll('.gs-result')) : [];
+    if (results.length === 0) return;
+    e.preventDefault();
+    if (e.key === 'ArrowDown') results[0].focus();
+    else if (e.key === 'ArrowUp') results[results.length - 1].focus();
+    else results[0].click();
+  });
+  resultsContainer?.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    const results = Array.from(resultsContainer.querySelectorAll('.gs-result'));
+    const idx = results.indexOf(document.activeElement);
+    if (idx === -1) return;
+    e.preventDefault();
+    if (e.key === 'ArrowUp' && idx === 0) { input.focus(); return; }
+    const nextIdx = e.key === 'ArrowDown' ? Math.min(idx + 1, results.length - 1) : Math.max(idx - 1, 0);
+    results[nextIdx].focus();
   });
 }
 
