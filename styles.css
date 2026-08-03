@@ -2915,22 +2915,41 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
 }
 
 @media (max-width: 768px) {
+  /* Bottom sheet, anchored to the map instead of sliding in from the side — the map
+     stays visible (and interactive) behind it at every height, it just reveals more
+     of the current tab's content the higher it's dragged. Height is driven by
+     setupMobileSheet() in app.js; the value below is only the initial/no-JS state. */
   .sidebar {
     position: fixed;
-    top: 0;
+    top: auto;
     left: 0;
-    height: 100%;
-    width: 85vw;
-    max-width: 360px;
-    transform: translateX(-100%);
-    transition: transform var(--transition);
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-width: none;
+    height: 55vh;
+    border-radius: 18px 18px 0 0;
+    transition: height 0.32s cubic-bezier(0.22, 0.61, 0.36, 1);
     z-index: 1100;
-    box-shadow: 4px 0 30px rgba(0,0,0,0.15);
+    box-shadow: 0 -10px 30px rgba(0,0,0,0.16);
   }
+  .sidebar.dragging { transition: none; }
 
-  .sidebar.open {
-    transform: translateX(0);
+  /* No slide-in state anymore — .open is kept only so any stray toggle is a no-op */
+  .sidebar.open { transform: none; }
+
+  .sidebar-backdrop { display: none; }
+
+  .sheet-handle-mobile {
+    display: flex;
+    justify-content: center;
+    padding: 9px 0 6px;
+    cursor: grab;
+    touch-action: none;
+    flex-shrink: 0;
   }
+  .sheet-handle-mobile:active { cursor: grabbing; }
+  .sheet-handle-mobile .bar { width: 36px; height: 4px; border-radius: 3px; background: var(--border); }
 
   .sidebar-toggle-close {
     display: flex;
@@ -2947,6 +2966,26 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
   .daily-card {
     display: none;
   }
+
+  /* Editorial preview (mobile only) — sits between the quick filters and the raw
+     category list, so it's what the "editorial" snap height reveals first. */
+  .mobile-editorial-preview { display: block; padding: 0 24px; margin-top: 8px; }
+  .mobile-editorial-preview .myday-hint { width: 100%; margin: 0 0 4px; }
+  .med-daily {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--text); color: var(--bg-card);
+    border-radius: var(--radius); padding: 9px 12px;
+    font-size: 0.74rem; margin-bottom: 14px;
+  }
+  .med-daily b { font-weight: 700; }
+  .med-stories { margin-bottom: 14px; }
+  .med-stories-row { display: flex; gap: 8px; margin-top: 8px; overflow-x: auto; }
+  .med-story {
+    flex: 0 0 30%; aspect-ratio: 3/4; border-radius: var(--radius);
+    background: linear-gradient(160deg, var(--accent-salvia-deep) 0%, #4d5a4d 100%);
+    display: flex; align-items: flex-end; padding: 7px; cursor: pointer;
+  }
+  .med-story span { font-size: 0.62rem; color: #fff; font-weight: 700; line-height: 1.2; }
 
   /* Bottom sheet: slides up from the bottom */
   .detail-panel {
@@ -3470,4 +3509,8 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
 }
 .myday-hint:hover { background: var(--border); border-color: var(--text); }
 .myday-hint-icon { font-size: 1rem; flex-shrink: 0; }
+
+/* Mobile-only editorial preview inside the Pepite tab's bottom sheet — hidden on
+   desktop, where the sidebar already shows everything at once with no sheet. */
+.mobile-editorial-preview { display: none; }
 

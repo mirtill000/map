@@ -25,7 +25,7 @@ There is no build, lint, or test tooling in this repo (no package.json, no test 
 
 - Serve the directory with any static file server from the repo root, e.g. `python3 -m http.server 8000`, then open `http://localhost:8000/`.
 - The service worker (`sw.js`) hardcodes `/beta/` as its scope prefix for cached asset paths (`ASSETS` array) — if you serve from a different path/port, cache-first behavior for the app shell won't match. When testing SW/offline behavior specifically, either serve under a `/beta/` path or adjust `ASSETS` temporarily (don't commit that adjustment unless the deploy path is actually changing).
-- Cache-busting: `styles.css` and `app.js` are referenced from `index.html` with `?v=N` query strings (currently `styles.css?v=21`, `app.js?v=89`). **Bump these version numbers whenever you change `styles.css` or `app.js`**, or returning visitors' service-worker/browser caches will keep serving stale code.
+- Cache-busting: `styles.css` and `app.js` are referenced from `index.html` with `?v=N` query strings (currently `styles.css?v=22`, `app.js?v=90`). **Bump these version numbers whenever you change `styles.css` or `app.js`**, or returning visitors' service-worker/browser caches will keep serving stale code.
 - No automated tests exist. Verify changes manually in a browser (desktop + mobile viewport — the layout has distinct mobile behavior for the sidebar/detail panel).
 
 ## Architecture
@@ -38,6 +38,9 @@ This is a hand-rolled, imperative DOM app: functions query/mutate `document.getE
 
 ### Three synced views of the same data
 Pepite/Eventi have three coordinated representations that must stay in sync on every filter/search change: the sidebar list, the Leaflet markers/clusters on the map (`markerCluster`, `eventiMarkersLayer`), and the right-hand detail panel (`openDetail`, `openEventDetail`, `openQuartiereDetail`). Marker rebuilds are debounced (`scheduleMarkers`, `_evMarkerTimer`) and short-circuited via a cache key (`_lastMarkersKey`) to avoid redundant Leaflet churn.
+
+### Mobile bottom sheet (`.sidebar` below 768px)
+On mobile the `.sidebar` is not an off-canvas panel that slides in from the side — it's a bottom sheet anchored to the map with three drag/tap snap heights (`peek`/`editorial`/`list`, defined in `SHEET_SNAPS`), driven by `setupMobileSheetDrag()` via `snapSheetTo()`. The map is always at least partially visible behind it, even at the `list` height. `closeSidebar()` now means "collapse to peek" rather than "hide the panel," and `#mobileMenuBtn` expands to `list` rather than toggling an `.open` class — the CSS `.sidebar.open` rule is a vestigial no-op kept only because a long-dead `setupMobileViewToggle()` function still (harmlessly, since its own target element doesn't exist) references it. The Pepite tab additionally shows a mobile-only `#mobileEditorialPreview` block (`renderMobileEditorialPreview()`) — a Pepita-del-giorno teaser, a Diario preview (hidden if no `storie.json` content is loaded), and a permanent "La mia giornata" CTA — positioned so the sheet's default `editorial` height reveals it before the raw category/list content. Any sheet height change calls `map.invalidateSize()` (see the map-resize note below) since the visible map area changes with it.
 
 ### Cross-linking pepite ↔ eventi
 `findEventsForPepita()` / `findPepitaForEvent()` fuzzy-match places to events by quartiere + significant words in the name (`_sigWords`), powering the "linked events" block shown in a pepita's detail panel and vice versa. This is a heuristic, not a stored foreign key — if a data entry's `nome`/`titolo`/`quartiere` wording changes, the link can silently break.
