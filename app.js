@@ -122,14 +122,18 @@ const i18n = {
     itinerariShareText: (title, sub, tappe) => `🗺️ ${title} — ${sub}\n📍 ${tappe}\n\nScopri le pepite di Milano →`,
     myDayBtnTitle: 'La mia giornata',
     myDayBtnSub: 'Crea un itinerario dai tuoi preferiti',
+    myDayBtnPreview: (n, names) => `${n} tapp${n === 1 ? 'a salvata' : 'e salvate'}: ${names}`,
     myDayTitle: 'La mia giornata',
     myDaySub: 'Ordina le tue tappe preferite e portale con te.',
+    myDaySharedBanner: 'Piano condiviso con te — salvalo per modificarlo e ritrovarlo tra i tuoi preferiti.',
+    myDaySharedSave: 'Salva nei preferiti',
     myDayShowMap: 'Mostra sulla mappa',
     myDayShare: 'Condividi',
     myDayEmptyTitle: 'Ancora nessuna tappa salvata',
     myDayEmptyText: 'Salva pepite ed eventi con il cuore ♥ per aggiungerli qui e comporre il tuo itinerario.',
     myDayShareText: (tappe) => `🗺️ La mia giornata a Milano\n📍 ${tappe}\n\nScopri le pepite di Milano →`,
     myDayHint: 'Componi un itinerario con i tuoi preferiti → La mia giornata',
+    moodMatcherHint: 'Non sai da dove iniziare? Rispondi a 3 domande → Trova la tua pepita',
     eventiTitle: 'Eventi del Mese',
     eventiDesc: () => `${getEventiPeriod('it')} — gli appuntamenti imperdibili a Milano.`,
     eventiSearchPlaceholder: 'Cerca eventi...',
@@ -318,14 +322,18 @@ const i18n = {
     itinerariShareText: (title, sub, tappe) => `🗺️ ${title} — ${sub}\n📍 ${tappe}\n\nDiscover Milan's hidden gems →`,
     myDayBtnTitle: 'My Day Plan',
     myDayBtnSub: 'Build an itinerary from your favourites',
+    myDayBtnPreview: (n, names) => `${n} saved stop${n === 1 ? '' : 's'}: ${names}`,
     myDayTitle: 'My Day Plan',
     myDaySub: 'Reorder your favourite stops and take them with you.',
+    myDaySharedBanner: 'A plan shared with you — save it to edit it and find it again in your favourites.',
+    myDaySharedSave: 'Save to favourites',
     myDayShowMap: 'Show on map',
     myDayShare: 'Share',
     myDayEmptyTitle: 'No stops saved yet',
     myDayEmptyText: 'Save gems and events with the heart ♥ to add them here and build your itinerary.',
     myDayShareText: (tappe) => `🗺️ My Day in Milan\n📍 ${tappe}\n\nDiscover Milan's hidden gems →`,
     myDayHint: 'Build a plan from your favourites → My Day Plan',
+    moodMatcherHint: 'Not sure where to start? Answer 3 questions → Find your gem',
     eventiTitle: 'Monthly Events',
     eventiDesc: () => `${getEventiPeriod('en')} — unmissable events in Milan.`,
     eventiSearchPlaceholder: 'Search events...',
@@ -700,6 +708,11 @@ function escapeHtml(value) {
   return String(value ?? '').replace(/[&<>"']/g, ch => _ESCAPE_HTML_MAP[ch]);
 }
 
+/** Lowercases and strips diacritics (città -> citta) so search matches regardless of accents. */
+function normalizeSearch(value) {
+  return String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
+
 // ── JSON helpers ──
 function parseJsonRobust(text) {
   try {
@@ -811,6 +824,7 @@ async function loadEventiData() {
 
   buildEventiDateFilters(); buildEventiFilters();
   renderEventi();
+  updateMyDayBtnPreview();
 }
 
 // ── Mobile View Toggle (Lista / Mappa) ──
@@ -909,14 +923,16 @@ function applyLanguage() {
   // Price filter "all" label
   const priceAllLabel = document.getElementById('priceAllLabel');
   if (priceAllLabel) priceAllLabel.textContent = t('priceAll');
+  // Mood Matcher discoverability hint
+  const moodMatcherHintText = document.getElementById('moodMatcherHintText');
+  if (moodMatcherHintText) moodMatcherHintText.textContent = t('moodMatcherHint');
   // Tab intros
   const iIntro = document.querySelector('#tabItinerari .tab-intro');
   if (iIntro) { iIntro.querySelector('h3').textContent = t('itinerariTitle'); iIntro.querySelector('p').textContent = t('itinerariDesc'); }
   // My Day Plan
   const myDayBtnTitle = document.getElementById('myDayBtnTitle');
   if (myDayBtnTitle) myDayBtnTitle.textContent = t('myDayBtnTitle');
-  const myDayBtnSub = document.getElementById('myDayBtnSub');
-  if (myDayBtnSub) myDayBtnSub.textContent = t('myDayBtnSub');
+  updateMyDayBtnPreview(); // re-renders myDayBtnSub — either the generic prompt or the live plan preview
   const myDayTitleEl = document.getElementById('myDayTitle');
   if (myDayTitleEl) myDayTitleEl.textContent = t('myDayTitle');
   const myDaySubEl = document.getElementById('myDaySub');
@@ -1038,12 +1054,12 @@ function getFiltered() {
   }
 
   // Search filter
-  const query = document.getElementById('searchInput')?.value.trim().toLowerCase();
+  const query = normalizeSearch(document.getElementById('searchInput')?.value.trim());
   if (query && query.length >= 2) {
     list = list.filter(p =>
-      p.nome.toLowerCase().includes(query) ||
-      p.quartiere.toLowerCase().includes(query) ||
-      p.categoria.toLowerCase().includes(query)
+      normalizeSearch(p.nome).includes(query) ||
+      normalizeSearch(p.quartiere).includes(query) ||
+      normalizeSearch(p.categoria).includes(query)
     );
   }
 
@@ -1171,7 +1187,7 @@ function renderPepiteList() {
       ? `<span class="dist-badge">📍 ${formatDist(haversineKm(userLocation.lat, userLocation.lng, p.lat, p.lng))}</span>`
       : '';
     return `
-      <div class="pepita-item${isActive ? ' active' : ''}" data-id="${p.id}">
+      <div class="pepita-item${isActive ? ' active' : ''}" data-id="${p.id}" role="button" tabindex="0" aria-label="${escapeHtml(p.nome)}">
         ${_pictureHtml(p.immagine, p.nome, 'pepita-item-img')}
         <div class="pepita-item-info">
           <h4>${escapeHtml(p.nome)}</h4>
@@ -1557,6 +1573,17 @@ function setupEventiList() {
     const ev = _evAllItems.find(x => x.id === id) || eventi.find(x => x.id === id);
     if (ev) openEventDetail(ev);
   });
+  // Keyboard activation — the save button is a native <button> and already
+  // fires 'click' on Enter/Space on its own; only the card div (role="button") needs this.
+  list.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const card = e.target.closest('.evento-card');
+    if (!card || e.target.closest('.evento-save-btn')) return;
+    e.preventDefault();
+    const id = +card.dataset.id;
+    const ev = _evAllItems.find(x => x.id === id) || eventi.find(x => x.id === id);
+    if (ev) openEventDetail(ev);
+  });
 }
 
 // ── Pepite List — delegated click (set up once, survives re-renders) ──
@@ -1584,6 +1611,19 @@ function setupPepiteList() {
     const p = pepite.find(x => x.id === +item.dataset.id);
     if (p) {
       openDetail(p); // flyTo + uncluster handled inside openDetail
+      closeSidebar();
+    }
+  });
+  // Keyboard activation — the save button is a native <button> and already
+  // fires 'click' on Enter/Space on its own; only the card div (role="button") needs this.
+  list.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const item = e.target.closest('.pepita-item');
+    if (!item || e.target.closest('.pepita-save-btn')) return;
+    e.preventDefault();
+    const p = pepite.find(x => x.id === +item.dataset.id);
+    if (p) {
+      openDetail(p);
       closeSidebar();
     }
   });
@@ -2409,6 +2449,7 @@ function toggleSave(p) {
   updateCategoryCounts();
   if (currentFilter === 'fav') renderPepiteList();
   syncSavedImagesToSW();
+  updateMyDayBtnPreview();
 }
 
 function updateSaveBtn() {
@@ -2676,7 +2717,7 @@ function renderItinerari() {
         ${it.tappe.map(tp => {
           const resolved = !!_resolvePepitaByName(tp.pepita);
           return `
-          <div class="itinerario-stop${resolved ? '' : ' itinerario-stop--external'}" data-pepita="${escapeHtml(tp.pepita)}" data-nome="${escapeHtml(tp.nome)}">
+          <div class="itinerario-stop${resolved ? '' : ' itinerario-stop--external'}" data-pepita="${escapeHtml(tp.pepita)}" data-nome="${escapeHtml(tp.nome)}" role="button" tabindex="0" aria-label="${escapeHtml(tp.nome)}">
             <span class="stop-time">${escapeHtml(tp.ora)}</span>
             <div class="stop-line"></div>
             <div class="stop-content">
@@ -2702,18 +2743,24 @@ function renderItinerari() {
 
   // Click on stop -> open pepita detail, or a Maps search for stops that reference a
   // real Milan place not (yet) in the pepite database (landmarks, historic venues, etc.)
+  const activateItinerarioStop = (stop) => {
+    const name = stop.dataset.pepita;
+    if (!name) return;
+    const p = _resolvePepitaByName(name);
+    if (p) {
+      openDetail(p); // flyTo + uncluster handled inside openDetail
+      closeSidebar();
+    } else {
+      const query = `${stop.dataset.nome || name}, Milano`;
+      window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, '_blank', 'noopener');
+    }
+  };
   container.querySelectorAll('.itinerario-stop').forEach(stop => {
-    stop.addEventListener('click', () => {
-      const name = stop.dataset.pepita;
-      if (!name) return;
-      const p = _resolvePepitaByName(name);
-      if (p) {
-        openDetail(p); // flyTo + uncluster handled inside openDetail
-        closeSidebar();
-      } else {
-        const query = `${stop.dataset.nome || name}, Milano`;
-        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, '_blank', 'noopener');
-      }
+    stop.addEventListener('click', () => activateItinerarioStop(stop));
+    stop.addEventListener('keydown', e => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      activateItinerarioStop(stop);
     });
   });
 
@@ -2756,6 +2803,8 @@ function renderItinerari() {
       closeSidebar();
     });
   });
+
+  updateMyDayBtnPreview();
 }
 
 function clearItinerarioLayer() {
@@ -2829,6 +2878,14 @@ function showItinerarioOnMap(it) {
 }
 
 // ── My Day Plan (custom itinerary built from saved pepite + eventi) ──
+// Set (to a resolved item list) when viewing a plan opened via a shared #giornata= link;
+// null means the normal, favourites-driven view. Reset on close so it never leaks.
+let _myDaySharedItems = null;
+
+function _currentMyDayItems() {
+  return _myDaySharedItems || getMyDayItems();
+}
+
 function _getMyDayOrder() {
   return safeLocalStorageJson('myday_order', []); // ordered keys: "p<id>" | "e<id>"
 }
@@ -2861,14 +2918,37 @@ function getMyDayItems() {
   }).filter(Boolean);
 }
 
-function openMyDay() {
+/** Keeps the "La mia giornata" CTA card (top of the Itinerari tab) showing a live
+ *  preview of the user's own plan instead of the same generic prompt regardless
+ *  of state — the curated itineraries below it are fixed, this one isn't. */
+function updateMyDayBtnPreview() {
+  const sub = document.getElementById('myDayBtnSub');
+  const btn = document.getElementById('myDayBtn');
+  if (!sub) return;
+  const items = getMyDayItems();
+  if (items.length === 0) {
+    sub.textContent = t('myDayBtnSub');
+    btn?.classList.remove('has-plan');
+    return;
+  }
+  const isEn = currentLang === 'en';
+  const names = items.slice(0, 3).map(({ type, obj }) =>
+    type === 'pepita' ? obj.nome : ((isEn ? (obj.titolo_en || obj.titolo) : obj.titolo) || ''));
+  const label = names.join(', ') + (items.length > 3 ? ` +${items.length - 3}` : '');
+  sub.textContent = t('myDayBtnPreview', items.length, label);
+  btn?.classList.add('has-plan');
+}
+
+function openMyDay(sharedItems = null) {
   const overlay = document.getElementById('myDayOverlay');
   if (!overlay) return;
+  _myDaySharedItems = sharedItems;
   overlay.style.display = 'flex';
   document.body.style.overflow = 'hidden';
   renderMyDayList();
   // Saved eventi only surface once eventi.json has loaded — refresh once it lands
-  if (!eventiLoaded) loadEventiData().then(renderMyDayList);
+  // (skip for a shared plan: its items are already fully resolved up front)
+  if (!sharedItems && !eventiLoaded) loadEventiData().then(renderMyDayList);
 }
 
 function closeMyDay() {
@@ -2876,14 +2956,27 @@ function closeMyDay() {
   if (!overlay) return;
   overlay.style.display = 'none';
   document.body.style.overflow = '';
+  _myDaySharedItems = null;
 }
 
 function renderMyDayList() {
   const list = document.getElementById('myDayList');
   const actions = document.getElementById('myDayActions');
+  const banner = document.getElementById('myDaySharedBanner');
   if (!list) return;
-  const items = getMyDayItems();
+  const isShared = !!_myDaySharedItems;
+  const items = _currentMyDayItems();
   const isEn = currentLang === 'en';
+
+  if (banner) {
+    banner.style.display = isShared ? 'flex' : 'none';
+    if (isShared) {
+      const bannerText = document.getElementById('myDaySharedBannerText');
+      if (bannerText) bannerText.textContent = t('myDaySharedBanner');
+      const saveBtn = document.getElementById('myDaySharedSaveBtn');
+      if (saveBtn) { saveBtn.textContent = t('myDaySharedSave'); saveBtn.disabled = false; }
+    }
+  }
 
   if (items.length === 0) {
     list.innerHTML = `<div class="myday-empty"><strong>${t('myDayEmptyTitle')}</strong><br>${t('myDayEmptyText')}</div>`;
@@ -2896,14 +2989,9 @@ function renderMyDayList() {
     const emoji = type === 'pepita' ? (categoryEmoji[obj.categoria] || '✨') : (eventBadgeEmoji[obj.badge] || '📅');
     const name  = type === 'pepita' ? obj.nome : ((isEn ? (obj.titolo_en || obj.titolo) : obj.titolo) || '');
     const meta  = type === 'pepita' ? obj.quartiere : `${obj.giorno} ${obj.mese}`;
-    return `
-      <div class="myday-item">
-        <span class="myday-item-num">${idx + 1}</span>
-        <span class="myday-item-emoji">${emoji}</span>
-        <div class="myday-item-info" data-open="${key}">
-          <strong>${escapeHtml(name)}</strong>
-          <span>${escapeHtml(meta || '')}</span>
-        </div>
+    // Reordering/removal only make sense for the viewer's own favourites-backed plan —
+    // a shared plan (not yet saved by this viewer) is shown read-only until adopted.
+    const itemControls = isShared ? '' : `
         <div class="myday-item-actions">
           <button class="myday-item-btn up" data-key="${key}" ${idx === 0 ? 'disabled' : ''} aria-label="Sposta su">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
@@ -2914,7 +3002,16 @@ function renderMyDayList() {
           <button class="myday-item-btn remove" data-key="${key}" aria-label="Rimuovi">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
           </button>
+        </div>`;
+    return `
+      <div class="myday-item">
+        <span class="myday-item-num">${idx + 1}</span>
+        <span class="myday-item-emoji">${emoji}</span>
+        <div class="myday-item-info" data-open="${key}">
+          <strong>${escapeHtml(name)}</strong>
+          <span>${escapeHtml(meta || '')}</span>
         </div>
+        ${itemControls}
       </div>`;
   }).join('');
 
@@ -2926,12 +3023,31 @@ function renderMyDayList() {
       if (item.type === 'pepita') openDetail(item.obj); else openEventDetail(item.obj);
     });
   });
-  list.querySelectorAll('.myday-item-btn.up').forEach(btn =>
-    btn.addEventListener('click', () => moveMyDayItem(btn.dataset.key, -1)));
-  list.querySelectorAll('.myday-item-btn.down').forEach(btn =>
-    btn.addEventListener('click', () => moveMyDayItem(btn.dataset.key, 1)));
-  list.querySelectorAll('.myday-item-btn.remove').forEach(btn =>
-    btn.addEventListener('click', () => removeMyDayItem(btn.dataset.key)));
+  if (!isShared) {
+    list.querySelectorAll('.myday-item-btn.up').forEach(btn =>
+      btn.addEventListener('click', () => moveMyDayItem(btn.dataset.key, -1)));
+    list.querySelectorAll('.myday-item-btn.down').forEach(btn =>
+      btn.addEventListener('click', () => moveMyDayItem(btn.dataset.key, 1)));
+    list.querySelectorAll('.myday-item-btn.remove').forEach(btn =>
+      btn.addEventListener('click', () => removeMyDayItem(btn.dataset.key)));
+  }
+}
+
+/** Adopts a shared plan: saves every item to the viewer's own favourites, then
+ *  switches the overlay back to the normal (now-editable) favourites-driven view. */
+function saveSharedMyDay() {
+  if (!_myDaySharedItems) return;
+  _myDaySharedItems.forEach(({ type, obj }) => {
+    if (type === 'pepita') { if (!obj.salvato) toggleSave(obj); }
+    else { if (!obj.salvato) toggleEventSave(obj); }
+  });
+  // Preserve the shared order as the starting custom order for the adopted plan
+  _setMyDayOrder(_myDaySharedItems.map(x => x.key));
+  _myDaySharedItems = null;
+  renderPepiteList();
+  renderMarkers();
+  if (eventiLoaded) renderEventi();
+  renderMyDayList();
 }
 
 function moveMyDayItem(key, delta) {
@@ -3019,7 +3135,9 @@ async function shareMyDay(items) {
   const names = items.map(({ type, obj }) =>
     type === 'pepita' ? obj.nome : ((isEn ? (obj.titolo_en || obj.titolo) : obj.titolo) || ''));
   const text = t('myDayShareText', names.join(' → '));
-  const appUrl = `${window.location.origin}${window.location.pathname}`;
+  // Encode the actual plan (not just a generic app link) so whoever opens it sees these same tappe
+  const planParam = items.map(x => x.key).join(',');
+  const appUrl = `${window.location.origin}${window.location.pathname}#giornata=${encodeURIComponent(planParam)}`;
   const shareData = { title: t('myDayTitle'), text, url: appUrl };
   if (navigator.share) {
     try { await navigator.share(shareData); } catch (_) { /* cancelled */ }
@@ -3041,16 +3159,17 @@ function setupMyDayPlan() {
     if (e.key === 'Escape' && document.getElementById('myDayOverlay')?.style.display !== 'none') closeMyDay();
   });
   document.getElementById('myDayShowMap')?.addEventListener('click', () => {
-    const items = getMyDayItems();
+    const items = _currentMyDayItems();
     if (items.length === 0) return;
     closeMyDay();
     showMyDayOnMap(items);
     closeSidebar();
   });
   document.getElementById('myDayShare')?.addEventListener('click', () => {
-    const items = getMyDayItems();
+    const items = _currentMyDayItems();
     if (items.length > 0) shareMyDay(items);
   });
+  document.getElementById('myDaySharedSaveBtn')?.addEventListener('click', saveSharedMyDay);
 
   // Contextual hints shown on the Preferiti view of Pepite/Eventi
   document.getElementById('pepiteMyDayHint')?.addEventListener('click', () => {
@@ -3262,7 +3381,7 @@ function getFilteredEventi() {
   let grouped = groupEventi(list);
 
   // Search filter — applied after grouping so multi-day groups are matched correctly
-  const query = document.getElementById('eventiSearchInput')?.value.trim().toLowerCase();
+  const query = normalizeSearch(document.getElementById('eventiSearchInput')?.value.trim());
   if (query && query.length >= 2) {
     const isEn = currentLang === 'en';
     const matchesQuery = e => {
@@ -3270,11 +3389,11 @@ function getFilteredEventi() {
       const desc   = (isEn ? (e.descrizione_en || e.desc_en || e.descrizione || e.desc) : (e.descrizione || e.desc)) || '';
       const tag    = (isEn ? (e.tag_en    || e.tag)    : e.tag)    || '';
       const luogo  = (isEn ? (e.luogo_en  || e.luogo)  : e.luogo)  || '';
-      return titolo.toLowerCase().includes(query) ||
-             desc.toLowerCase().includes(query)   ||
-             tag.toLowerCase().includes(query)    ||
-             luogo.toLowerCase().includes(query)  ||
-             (e.quartiere || '').toLowerCase().includes(query);
+      return normalizeSearch(titolo).includes(query) ||
+             normalizeSearch(desc).includes(query)   ||
+             normalizeSearch(tag).includes(query)    ||
+             normalizeSearch(luogo).includes(query)  ||
+             normalizeSearch(e.quartiere || '').includes(query);
     };
     grouped = grouped.filter(e =>
       matchesQuery(e) || (e._days && e._days.some(matchesQuery))
@@ -3339,7 +3458,7 @@ function _buildEventiCardHTML(e, isEn) {
   }
 
   return `
-  <div class="evento-card${isActive ? ' active' : ''}" data-id="${e.id}" ${e.quartiere ? `data-quartiere="${escapeHtml(e.quartiere)}"` : ''}>
+  <div class="evento-card${isActive ? ' active' : ''}" data-id="${e.id}" ${e.quartiere ? `data-quartiere="${escapeHtml(e.quartiere)}"` : ''} role="button" tabindex="0" aria-label="${escapeHtml(isEn ? (e.titolo_en || e.titolo) : e.titolo)}">
     <div class="evento-date${isMulti ? ' multiday' : ''}">
       <span class="day">${escapeHtml(dayLabel)}</span>
       <span class="month">${escapeHtml(e.mese)}</span>
@@ -3795,6 +3914,7 @@ function toggleEventSave(ev) {
   } else if (Notification?.permission === 'granted') {
     scheduleEventNotifications(); // only reschedule if permission is actually granted
   }
+  updateMyDayBtnPreview();
 }
 
 // ── Update Event Save Button ──
@@ -3868,6 +3988,23 @@ function downloadEventICS(ev) {
 async function handleDeepLink() {
   const hash = window.location.hash;
   if (!hash) return;
+
+  // Deep link to a shared "La mia giornata" plan — #giornata=p12,e5,p33
+  const giornataMatch = hash.match(/^#giornata=(.+)$/);
+  if (giornataMatch) {
+    await Promise.all([loadPepiteData(), loadEventiData()]);
+    const keys = decodeURIComponent(giornataMatch[1]).split(',').map(k => k.trim()).filter(Boolean);
+    const items = keys.map(key => {
+      const type = key[0] === 'p' ? 'pepita' : 'evento';
+      const id = key.slice(1);
+      const obj = type === 'pepita'
+        ? pepite.find(x => String(x.id) === id)
+        : eventi.find(x => String(x.id) === id);
+      return obj ? { type, key, obj } : null;
+    }).filter(Boolean);
+    if (items.length > 0) openMyDay(items);
+    return;
+  }
 
   // Deep link to evento
   const eventoMatch = hash.match(/^#evento-(\d+)$/);
@@ -4338,13 +4475,13 @@ function setupGlobalSearch() {
 }
 
 function _gsMatch(haystack, query) {
-  return !!haystack && haystack.toLowerCase().includes(query);
+  return !!haystack && normalizeSearch(haystack).includes(query);
 }
 
 function renderGlobalSearchResults(rawQuery) {
   const container = document.getElementById('globalSearchResults');
   if (!container) return;
-  const query = rawQuery.trim().toLowerCase();
+  const query = normalizeSearch(rawQuery.trim());
   const isEn  = currentLang === 'en';
 
   if (query.length < 2) {
@@ -5065,12 +5202,18 @@ function renderMobileEditorialPreview() {
       if (storiesLabel) storiesLabel.textContent = t('storieTab');
       storiesRow.innerHTML = storieData.slice(0, 4).map(s => {
         const title = s.title?.[currentLang] || s.title?.it || '';
-        return `<div class="med-story" data-id="${escapeHtml(s.id)}"><span>${escapeHtml(s.emoji || '📖')} ${escapeHtml(title)}</span></div>`;
+        return `<div class="med-story" data-id="${escapeHtml(s.id)}" role="button" tabindex="0" aria-label="${escapeHtml(title)}"><span>${escapeHtml(s.emoji || '📖')} ${escapeHtml(title)}</span></div>`;
       }).join('');
       storiesRow.querySelectorAll('.med-story').forEach(el => {
-        el.addEventListener('click', () => {
+        const activate = () => {
           const s = storieData.find(x => String(x.id) === el.dataset.id);
           if (s) openStoria(s);
+        };
+        el.addEventListener('click', activate);
+        el.addEventListener('keydown', e => {
+          if (e.key !== 'Enter' && e.key !== ' ') return;
+          e.preventDefault();
+          activate();
         });
       });
       storiesEl.style.display = 'block';
