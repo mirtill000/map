@@ -2559,6 +2559,21 @@ const itinerariData = [
     }
   ];
 
+/**
+ * Resolve an itinerario stop's referenced name to an actual pepita, if one exists.
+ * Several stops in the curated itinerari point to real, well-known Milan places
+ * (landmarks, historic venues) that were never added to data.json — those legitimately
+ * return null and are handled by falling back to a Maps search rather than a broken tap.
+ */
+function _resolvePepitaByName(name) {
+  if (!name) return null;
+  const norm = name.toLowerCase();
+  return pepite.find(x => x.nome === name)
+    ?? pepite.find(x => x.nome.toLowerCase() === norm)
+    ?? pepite.find(x => norm.length >= 4 && (x.nome.toLowerCase().includes(norm) || norm.includes(x.nome.toLowerCase())))
+    ?? null;
+}
+
 function renderItinerari() {
   const container = document.getElementById('itinerariList');
 
@@ -2572,16 +2587,19 @@ function renderItinerari() {
         </div>
       </div>
       <div class="itinerario-stops">
-        ${it.tappe.map(tp => `
-          <div class="itinerario-stop" data-pepita="${tp.pepita}">
-            <span class="stop-time">${tp.ora}</span>
+        ${it.tappe.map(tp => {
+          const resolved = !!_resolvePepitaByName(tp.pepita);
+          return `
+          <div class="itinerario-stop${resolved ? '' : ' itinerario-stop--external'}" data-pepita="${escapeHtml(tp.pepita)}" data-nome="${escapeHtml(tp.nome)}">
+            <span class="stop-time">${escapeHtml(tp.ora)}</span>
             <div class="stop-line"></div>
             <div class="stop-content">
-              <h5>${tp.nome}</h5>
+              <h5>${escapeHtml(tp.nome)}${resolved ? '' : ' <svg class="stop-external-icon" xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'}</h5>
               <p>${t(tp.descKey)}</p>
             </div>
           </div>
-        `).join('')}
+        `;
+        }).join('')}
       </div>
       <div class="itinerario-actions">
         <button class="itinerario-map-btn" data-giorno="${it.giorno}">
@@ -2596,19 +2614,19 @@ function renderItinerari() {
     </div>
   `).join('');
 
-  // Click on stop -> open pepita detail
+  // Click on stop -> open pepita detail, or a Maps search for stops that reference a
+  // real Milan place not (yet) in the pepite database (landmarks, historic venues, etc.)
   container.querySelectorAll('.itinerario-stop').forEach(stop => {
     stop.addEventListener('click', () => {
       const name = stop.dataset.pepita;
       if (!name) return;
-      // Exact match first; fall back to case-insensitive; last resort: substring (≥4 chars to avoid false positives)
-      const norm = name.toLowerCase();
-      const p = pepite.find(x => x.nome === name)
-        ?? pepite.find(x => x.nome.toLowerCase() === norm)
-        ?? pepite.find(x => norm.length >= 4 && (x.nome.toLowerCase().includes(norm) || norm.includes(x.nome.toLowerCase())));
+      const p = _resolvePepitaByName(name);
       if (p) {
         openDetail(p); // flyTo + uncluster handled inside openDetail
         closeSidebar();
+      } else {
+        const query = `${stop.dataset.nome || name}, Milano`;
+        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`, '_blank', 'noopener');
       }
     });
   });
@@ -2675,7 +2693,7 @@ function showItinerarioOnMap(it) {
   const coords = [];
 
   it.tappe.forEach((tp, idx) => {
-    const p = pepite.find(x => x.nome.includes(tp.pepita) || tp.pepita.includes(x.nome));
+    const p = _resolvePepitaByName(tp.pepita);
     if (!p || !p.lat || !p.lng) return;
 
     coords.push([p.lat, p.lng]);
