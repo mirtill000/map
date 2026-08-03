@@ -65,6 +65,7 @@ const _notifTimers  = new Map(); // eventId → setTimeout handle for tomorrow-n
 let   _imgObserver  = null;      // IntersectionObserver for pepite card images
 let   _markerTimer  = null;      // debounce handle for renderMarkers
 let   filterOpenNow = (() => { try { return localStorage.getItem('pepite_open_now') === 'true'; } catch { return false; } })();  // "Aperto ora" filter pill state
+let   currentPriceFilter = (() => { try { return localStorage.getItem('pepite_price_filter') || 'all'; } catch { return 'all'; } })(); // 'all' | '2' | '3' | '4' | '5'
 
 const categoryEmoji = {
   'Ristoranti Romantici': '🕯️',
@@ -85,6 +86,7 @@ const i18n = {
     appTitle: 'Pepite',
     appSubtitle: "Milano d'autore",
     searchPlaceholder: 'Nome, zona, categoria...',
+    globalSearchPlaceholder: 'Cerca pepite, eventi, itinerari, storie...',
     priceLabel: 'Fascia di Preziosità',
     priceAll: 'Tutte',
     catLabel: 'Categorie',
@@ -118,6 +120,15 @@ const i18n = {
     itinerariDesc: 'Itinerari curati per vivere il meglio della città, pepita dopo pepita.',
     itinerariShare: 'Condividi',
     itinerariShareText: (title, sub, tappe) => `🗺️ ${title} — ${sub}\n📍 ${tappe}\n\nScopri le pepite di Milano →`,
+    myDayBtnTitle: 'La mia giornata',
+    myDayBtnSub: 'Crea un itinerario dai tuoi preferiti',
+    myDayTitle: 'La mia giornata',
+    myDaySub: 'Ordina le tue tappe preferite e portale con te.',
+    myDayShowMap: 'Mostra sulla mappa',
+    myDayShare: 'Condividi',
+    myDayEmptyTitle: 'Ancora nessuna tappa salvata',
+    myDayEmptyText: 'Salva pepite ed eventi con il cuore ♥ per aggiungerli qui e comporre il tuo itinerario.',
+    myDayShareText: (tappe) => `🗺️ La mia giornata a Milano\n📍 ${tappe}\n\nScopri le pepite di Milano →`,
     eventiTitle: 'Eventi del Mese',
     eventiDesc: () => `${getEventiPeriod('it')} — gli appuntamenti imperdibili a Milano.`,
     eventiSearchPlaceholder: 'Cerca eventi...',
@@ -155,6 +166,18 @@ const i18n = {
     installManual: 'Usa il menu del browser → "Aggiungi a Home" per installare',
     installDismiss: 'OK',
     shareText: (nome, desc) => `Ho scoperto una Pepita a Milano: ${nome} — ${desc}`,
+    // Onboarding (first-launch mini tour)
+    onbNext: 'Avanti',
+    onbStart: 'Iniziamo',
+    onbSkip: 'Salta',
+    onbTitle1: 'Benvenuto in Pepite per Tutti',
+    onbText1: 'La mappa delle gemme nascoste di Milano: locali, eventi, itinerari e storie scelti per te.',
+    onbTitle2: 'Pepite',
+    onbText2: 'Scopri locali autentici, filtra per categoria, prezzo o quartiere, e salva i tuoi preferiti con il cuore ♥.',
+    onbTitle3: 'Itinerari & La mia giornata',
+    onbText3: 'Segui uno dei nostri percorsi curati o crea il tuo itinerario personale a partire dai luoghi ed eventi che hai salvato.',
+    onbTitle4: 'Eventi, Diario e ricerca ovunque',
+    onbText4: 'Scopri cosa succede in città e le storie editoriali del Diario. Usa la lente 🔍 in alto per cercare tutto insieme, in ogni momento.',
     // Itinerari
     it1Title: 'La Milano Segreta', it1Sub: 'Cortili, botteghe e sapori nascosti',
     it2Title: 'Design & Gusto', it2Sub: 'Arte contemporanea, vintage e cocktail',
@@ -257,6 +280,7 @@ const i18n = {
     appTitle: 'Pepite',
     appSubtitle: "Milan's hidden gems",
     searchPlaceholder: 'Name, area, category...',
+    globalSearchPlaceholder: 'Search gems, events, itineraries, stories...',
     priceLabel: 'Price Range',
     priceAll: 'All',
     catLabel: 'Categories',
@@ -290,6 +314,15 @@ const i18n = {
     itinerariDesc: 'Curated itineraries to experience the best of the city, gem after gem.',
     itinerariShare: 'Share',
     itinerariShareText: (title, sub, tappe) => `🗺️ ${title} — ${sub}\n📍 ${tappe}\n\nDiscover Milan's hidden gems →`,
+    myDayBtnTitle: 'My Day Plan',
+    myDayBtnSub: 'Build an itinerary from your favourites',
+    myDayTitle: 'My Day Plan',
+    myDaySub: 'Reorder your favourite stops and take them with you.',
+    myDayShowMap: 'Show on map',
+    myDayShare: 'Share',
+    myDayEmptyTitle: 'No stops saved yet',
+    myDayEmptyText: 'Save gems and events with the heart ♥ to add them here and build your itinerary.',
+    myDayShareText: (tappe) => `🗺️ My Day in Milan\n📍 ${tappe}\n\nDiscover Milan's hidden gems →`,
     eventiTitle: 'Monthly Events',
     eventiDesc: () => `${getEventiPeriod('en')} — unmissable events in Milan.`,
     eventiSearchPlaceholder: 'Search events...',
@@ -327,6 +360,18 @@ const i18n = {
     installManual: 'Use browser menu → "Add to Home Screen" to install',
     installDismiss: 'OK',
     shareText: (nome, desc) => `I discovered a hidden gem in Milan: ${nome} — ${desc}`,
+    // Onboarding (first-launch mini tour)
+    onbNext: 'Next',
+    onbStart: "Let's go",
+    onbSkip: 'Skip',
+    onbTitle1: 'Welcome to Pepite per Tutti',
+    onbText1: "Milan's hidden-gem map: venues, events, itineraries and stories picked just for you.",
+    onbTitle2: 'Gems',
+    onbText2: 'Discover authentic venues, filter by category, price or neighborhood, and save your favourites with the heart ♥.',
+    onbTitle3: 'Itineraries & My Day Plan',
+    onbText3: 'Follow one of our curated routes, or build your own day plan from the places and events you saved.',
+    onbTitle4: 'Events, Diary and search everywhere',
+    onbText4: "See what's on in the city and read the Diary's editorial stories. Use the 🔍 icon up top to search everything at once, anytime.",
     it1Title: 'Secret Milan', it1Sub: 'Courtyards, workshops & hidden flavors',
     it2Title: 'Design & Taste', it2Sub: 'Contemporary art, vintage & cocktails',
     it3Title: 'Navigli & Green Oases', it3Sub: 'Canals, secret gardens & sweetness',
@@ -457,6 +502,80 @@ function dismissSplash() {
   setTimeout(() => splash.classList.add('hidden'), 400);
 }
 
+// ── Onboarding (first-launch mini tour) ──
+const onboardingSlides = [
+  { emoji: '✨',  titleKey: 'onbTitle1', textKey: 'onbText1' },
+  { emoji: '🕯️', titleKey: 'onbTitle2', textKey: 'onbText2' },
+  { emoji: '🗺️', titleKey: 'onbTitle3', textKey: 'onbText3' },
+  { emoji: '🔍',  titleKey: 'onbTitle4', textKey: 'onbText4' }
+];
+let onboardingIdx = 0;
+
+function setupOnboarding() {
+  document.getElementById('onboardingNext')?.addEventListener('click', () => {
+    if (onboardingIdx < onboardingSlides.length - 1) {
+      onboardingIdx++;
+      renderOnboardingSlide();
+    } else {
+      closeOnboarding();
+    }
+  });
+  document.getElementById('onboardingBack')?.addEventListener('click', () => {
+    if (onboardingIdx > 0) { onboardingIdx--; renderOnboardingSlide(); }
+  });
+  document.getElementById('onboardingSkip')?.addEventListener('click', closeOnboarding);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('onboardingOverlay')?.style.display !== 'none') closeOnboarding();
+  });
+
+  let seen = false;
+  try { seen = localStorage.getItem('pepite_onboarding_seen') === '1'; } catch { seen = false; }
+  if (!seen) {
+    // Show right after the splash fades out
+    setTimeout(openOnboarding, 1500);
+  }
+}
+
+function openOnboarding() {
+  const overlay = document.getElementById('onboardingOverlay');
+  if (!overlay) return;
+  onboardingIdx = 0;
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  renderOnboardingSlide();
+}
+
+function closeOnboarding() {
+  const overlay = document.getElementById('onboardingOverlay');
+  if (!overlay) return;
+  overlay.style.display = 'none';
+  document.body.style.overflow = '';
+  safeLocalStorageSet('pepite_onboarding_seen', '1');
+}
+
+function renderOnboardingSlide() {
+  const slide = onboardingSlides[onboardingIdx];
+  const el = document.getElementById('onboardingSlide');
+  if (!el) return;
+  el.innerHTML = `
+    <span class="onboarding-emoji">${slide.emoji}</span>
+    <h3>${escapeHtml(t(slide.titleKey))}</h3>
+    <p>${escapeHtml(t(slide.textKey))}</p>
+  `;
+  const dots = document.getElementById('onboardingDots');
+  if (dots) {
+    dots.innerHTML = onboardingSlides.map((_, i) =>
+      `<span class="onboarding-dot${i === onboardingIdx ? ' active' : ''}"></span>`
+    ).join('');
+  }
+  const backBtn = document.getElementById('onboardingBack');
+  if (backBtn) backBtn.style.display = onboardingIdx === 0 ? 'none' : '';
+  const nextBtn = document.getElementById('onboardingNext');
+  if (nextBtn) nextBtn.textContent = onboardingIdx === onboardingSlides.length - 1 ? t('onbStart') : t('onbNext');
+  const skipBtn = document.getElementById('onboardingSkip');
+  if (skipBtn) skipBtn.textContent = t('onbSkip');
+}
+
 // ── Init ──
 document.addEventListener('DOMContentLoaded', async () => {
   setTimeout(dismissSplash, 1000); // single timeout: fade starts at 1 s, hidden at 1.4 s
@@ -479,6 +598,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupEventiSearch();
   setupMoodMatcher();
   setupStoryViewer();
+  setupGlobalSearch();
+  setupMyDayPlan();
+  setupOnboarding();
 
   // Pepite tab is active by default — load pepite data and set map mode
   currentMapMode = 'pepite';
@@ -702,6 +824,7 @@ function setupLangToggle() {
       if (storieLoaded) renderStorie();
       if (currentDetail) openDetail(currentDetail);
       if (currentEventDetail) openEventDetail(currentEventDetail);
+      if (document.getElementById('onboardingOverlay')?.style.display !== 'none') renderOnboardingSlide();
     });
   });
 }
@@ -711,6 +834,8 @@ function applyLanguage() {
   document.getElementById('brandSubtitle').textContent = t('appSubtitle');
   // Search
   document.getElementById('searchInput').placeholder = t('searchPlaceholder');
+  const gsInput = document.getElementById('globalSearchInput');
+  if (gsInput) gsInput.placeholder = t('globalSearchPlaceholder');
   // Tabs
   document.querySelectorAll('.sidebar-tab').forEach(tab => {
     const key = 'tab' + tab.dataset.tab.charAt(0).toUpperCase() + tab.dataset.tab.slice(1);
@@ -732,9 +857,25 @@ function applyLanguage() {
     const key = catTexts[item.dataset.cat];
     if (key) item.querySelector('.cat-text').textContent = t(key);
   });
+  // Price filter "all" label
+  const priceAllLabel = document.getElementById('priceAllLabel');
+  if (priceAllLabel) priceAllLabel.textContent = t('priceAll');
   // Tab intros
   const iIntro = document.querySelector('#tabItinerari .tab-intro');
   if (iIntro) { iIntro.querySelector('h3').textContent = t('itinerariTitle'); iIntro.querySelector('p').textContent = t('itinerariDesc'); }
+  // My Day Plan
+  const myDayBtnTitle = document.getElementById('myDayBtnTitle');
+  if (myDayBtnTitle) myDayBtnTitle.textContent = t('myDayBtnTitle');
+  const myDayBtnSub = document.getElementById('myDayBtnSub');
+  if (myDayBtnSub) myDayBtnSub.textContent = t('myDayBtnSub');
+  const myDayTitleEl = document.getElementById('myDayTitle');
+  if (myDayTitleEl) myDayTitleEl.textContent = t('myDayTitle');
+  const myDaySubEl = document.getElementById('myDaySub');
+  if (myDaySubEl) myDaySubEl.textContent = t('myDaySub');
+  const myDayShowMapLabel = document.getElementById('myDayShowMapLabel');
+  if (myDayShowMapLabel) myDayShowMapLabel.textContent = t('myDayShowMap');
+  const myDayShareLabel = document.getElementById('myDayShareLabel');
+  if (myDayShareLabel) myDayShareLabel.textContent = t('myDayShare');
   const tabBtnStorie = document.getElementById('tabBtnStorie');
   if (tabBtnStorie) tabBtnStorie.textContent = t('storieTab');
   const storieTabTitle = document.getElementById('storieTabTitle');
@@ -858,6 +999,11 @@ function getFiltered() {
     list = list.filter(p => isOpenNow(p) === true);
   }
 
+  // Price filter
+  if (currentPriceFilter !== 'all') {
+    list = list.filter(p => String(p.prezzo) === currentPriceFilter);
+  }
+
   // Sort by distance when "Near me" is active
   if (nearMeActive && userLocation) {
     list.sort((a, b) => {
@@ -944,9 +1090,12 @@ function renderPepiteList() {
     list.querySelector('.empty-reset-btn').addEventListener('click', () => {
       currentFilter = 'all';
       filterOpenNow = false;
+      currentPriceFilter = 'all';
       safeLocalStorageSet('pepite_filter', 'all');
       safeLocalStorageSet('pepite_open_now', false);
+      safeLocalStorageSet('pepite_price_filter', 'all');
       document.getElementById('openNowPill')?.classList.remove('active');
+      document.querySelectorAll('.price-pill').forEach(p => p.classList.toggle('active', p.dataset.price === 'all'));
       document.getElementById('searchInput').value = '';
       document.querySelectorAll('.cat-item').forEach(i => i.classList.toggle('active', i.dataset.cat === 'all'));
       renderPepiteList();
@@ -1418,6 +1567,8 @@ function setNearMe(lat, lng) {
   if (lbl) lbl.textContent = t('nearMeActive');
 
   renderPepiteList();
+  // Near Me also sorts/badges eventi by distance (falls back to quartiere centroid)
+  if (eventiLoaded) renderEventi();
 }
 
 function clearNearMe() {
@@ -1431,6 +1582,7 @@ function clearNearMe() {
   if (lbl) lbl.textContent = t('nearMe');
 
   renderPepiteList();
+  if (eventiLoaded) renderEventi();
 }
 
 function showNearMeToast(msg) {
@@ -1510,6 +1662,23 @@ function setupFilters() {
         const bounds = L.latLngBounds(filtered.map(p => [p.lat, p.lng]));
         map.fitBounds(bounds.pad(0.15), { duration: 0.8 });
       }
+    });
+  });
+
+  // Price filter pills — restore persisted state
+  document.querySelectorAll('.price-pill').forEach(pill =>
+    pill.classList.toggle('active', pill.dataset.price === currentPriceFilter));
+
+  document.querySelectorAll('.price-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      navigator.vibrate?.(30);
+      document.querySelectorAll('.price-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      currentPriceFilter = pill.dataset.price;
+      safeLocalStorageSet('pepite_price_filter', currentPriceFilter);
+      _lastMarkersKey = null; // force marker rebuild
+      renderPepiteList();
+      renderMarkers();
     });
   });
 }
@@ -2202,10 +2371,8 @@ function setupSidebarTabs() {
 }
 
 // ── Itinerari ──
-function renderItinerari() {
-  const container = document.getElementById('itinerariList');
-
-  const itinerari = [
+// Module-level so it can be indexed by the global cross-domain search, not just rendered here.
+const itinerariData = [
     {
       giorno: '1', titoloKey: 'it1Title', subKey: 'it1Sub',
       tappe: [
@@ -2319,8 +2486,11 @@ function renderItinerari() {
     }
   ];
 
-  container.innerHTML = itinerari.map(it => `
-    <div class="itinerario-card">
+function renderItinerari() {
+  const container = document.getElementById('itinerariList');
+
+  container.innerHTML = itinerariData.map(it => `
+    <div class="itinerario-card" data-giorno="${it.giorno}">
       <div class="itinerario-header">
         <div class="itinerario-day"><span>${it.giorno}</span></div>
         <div class="itinerario-info">
@@ -2375,7 +2545,7 @@ function renderItinerari() {
     btn.addEventListener('click', async () => {
       navigator.vibrate?.(30);
       const giorno = btn.dataset.giorno;
-      const it = itinerari.find(x => x.giorno === giorno);
+      const it = itinerariData.find(x => x.giorno === giorno);
       if (!it) return;
       const title = t(it.titoloKey);
       const sub   = t(it.subKey);
@@ -2395,7 +2565,7 @@ function renderItinerari() {
   container.querySelectorAll('.itinerario-map-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const giorno = btn.dataset.giorno;
-      const it = itinerari.find(x => x.giorno === giorno);
+      const it = itinerariData.find(x => x.giorno === giorno);
       if (!it) return;
       const isActive = btn.classList.contains('active');
       // Toggle off
@@ -2479,6 +2649,231 @@ function showItinerarioOnMap(it) {
   if (coords.length > 0) {
     map.fitBounds(L.latLngBounds(coords), { padding: [40, 40], maxZoom: 15 });
   }
+}
+
+// ── My Day Plan (custom itinerary built from saved pepite + eventi) ──
+function _getMyDayOrder() {
+  return safeLocalStorageJson('myday_order', []); // ordered keys: "p<id>" | "e<id>"
+}
+
+function _setMyDayOrder(order) {
+  safeLocalStorageSet('myday_order', JSON.stringify(order));
+}
+
+/** Resolve saved pepite+eventi into an ordered list, reconciling with the persisted custom order
+ *  (favourites remain the single source of truth — the order is just a preference layer on top). */
+function getMyDayItems() {
+  const savedKeys = [
+    ...pepite.filter(p => p.salvato).map(p => 'p' + p.id),
+    ...eventi.filter(e => e.salvato).map(e => 'e' + e.id)
+  ];
+  const savedSet = new Set(savedKeys);
+
+  const order = _getMyDayOrder().filter(k => savedSet.has(k));
+  const known = new Set(order);
+  savedKeys.forEach(k => { if (!known.has(k)) order.push(k); });
+  _setMyDayOrder(order);
+
+  return order.map(key => {
+    const type = key[0] === 'p' ? 'pepita' : 'evento';
+    const id = key.slice(1);
+    const obj = type === 'pepita'
+      ? pepite.find(x => String(x.id) === id)
+      : eventi.find(x => String(x.id) === id);
+    return obj ? { type, key, obj } : null;
+  }).filter(Boolean);
+}
+
+function openMyDay() {
+  const overlay = document.getElementById('myDayOverlay');
+  if (!overlay) return;
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  renderMyDayList();
+  // Saved eventi only surface once eventi.json has loaded — refresh once it lands
+  if (!eventiLoaded) loadEventiData().then(renderMyDayList);
+}
+
+function closeMyDay() {
+  const overlay = document.getElementById('myDayOverlay');
+  if (!overlay) return;
+  overlay.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function renderMyDayList() {
+  const list = document.getElementById('myDayList');
+  const actions = document.getElementById('myDayActions');
+  if (!list) return;
+  const items = getMyDayItems();
+  const isEn = currentLang === 'en';
+
+  if (items.length === 0) {
+    list.innerHTML = `<div class="myday-empty"><strong>${t('myDayEmptyTitle')}</strong><br>${t('myDayEmptyText')}</div>`;
+    if (actions) actions.style.display = 'none';
+    return;
+  }
+  if (actions) actions.style.display = 'flex';
+
+  list.innerHTML = items.map(({ type, key, obj }, idx) => {
+    const emoji = type === 'pepita' ? (categoryEmoji[obj.categoria] || '✨') : (eventBadgeEmoji[obj.badge] || '📅');
+    const name  = type === 'pepita' ? obj.nome : ((isEn ? (obj.titolo_en || obj.titolo) : obj.titolo) || '');
+    const meta  = type === 'pepita' ? obj.quartiere : `${obj.giorno} ${obj.mese}`;
+    return `
+      <div class="myday-item">
+        <span class="myday-item-num">${idx + 1}</span>
+        <span class="myday-item-emoji">${emoji}</span>
+        <div class="myday-item-info" data-open="${key}">
+          <strong>${escapeHtml(name)}</strong>
+          <span>${escapeHtml(meta || '')}</span>
+        </div>
+        <div class="myday-item-actions">
+          <button class="myday-item-btn up" data-key="${key}" ${idx === 0 ? 'disabled' : ''} aria-label="Sposta su">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+          </button>
+          <button class="myday-item-btn down" data-key="${key}" ${idx === items.length - 1 ? 'disabled' : ''} aria-label="Sposta giù">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          <button class="myday-item-btn remove" data-key="${key}" aria-label="Rimuovi">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+
+  list.querySelectorAll('.myday-item-info').forEach(el => {
+    el.addEventListener('click', () => {
+      const item = items.find(x => x.key === el.dataset.open);
+      if (!item) return;
+      closeMyDay();
+      if (item.type === 'pepita') openDetail(item.obj); else openEventDetail(item.obj);
+    });
+  });
+  list.querySelectorAll('.myday-item-btn.up').forEach(btn =>
+    btn.addEventListener('click', () => moveMyDayItem(btn.dataset.key, -1)));
+  list.querySelectorAll('.myday-item-btn.down').forEach(btn =>
+    btn.addEventListener('click', () => moveMyDayItem(btn.dataset.key, 1)));
+  list.querySelectorAll('.myday-item-btn.remove').forEach(btn =>
+    btn.addEventListener('click', () => removeMyDayItem(btn.dataset.key)));
+}
+
+function moveMyDayItem(key, delta) {
+  const order = _getMyDayOrder();
+  const idx = order.indexOf(key);
+  const newIdx = idx + delta;
+  if (idx === -1 || newIdx < 0 || newIdx >= order.length) return;
+  [order[idx], order[newIdx]] = [order[newIdx], order[idx]];
+  _setMyDayOrder(order);
+  renderMyDayList();
+}
+
+function removeMyDayItem(key) {
+  const type = key[0] === 'p' ? 'pepita' : 'evento';
+  const id = key.slice(1);
+  if (type === 'pepita') {
+    const p = pepite.find(x => String(x.id) === id);
+    if (p) toggleSave(p);
+  } else {
+    const e = eventi.find(x => String(x.id) === id);
+    if (e) toggleEventSave(e);
+  }
+  renderPepiteList();
+  renderMarkers();
+  if (eventiLoaded) renderEventi();
+  renderMyDayList();
+}
+
+function showMyDayOnMap(items) {
+  if (!map) return;
+
+  if (itinerarioLayer) { map.removeLayer(itinerarioLayer); itinerarioLayer = null; }
+  if (markerCluster) { map.removeLayer(markerCluster); markerCluster = null; }
+  if (currentMapMode === 'eventi') { clearEventiMarkers(); currentMapMode = 'pepite'; }
+
+  const isEn = currentLang === 'en';
+  const group = L.layerGroup();
+  const coords = [];
+
+  items.forEach(({ type, obj }, idx) => {
+    const lat = type === 'pepita' ? obj.lat : (obj.lat || (quartiereCoords[obj.quartiere] || [])[0]);
+    const lng = type === 'pepita' ? obj.lng : (obj.lng || (quartiereCoords[obj.quartiere] || [])[1]);
+    if (!lat || !lng) return;
+
+    coords.push([lat, lng]);
+    const name = type === 'pepita' ? obj.nome : ((isEn ? (obj.titolo_en || obj.titolo) : obj.titolo) || '');
+
+    const icon = L.divIcon({
+      className: 'pepite-marker',
+      html: `<div style="
+        background:#1A1A1A;
+        border:2px solid #FFF;
+        border-radius:50%;
+        width:32px;height:32px;
+        display:flex;align-items:center;justify-content:center;
+        font-family:var(--font-sans,sans-serif);
+        font-size:11px;font-weight:700;
+        color:#FFF;
+        box-shadow:0 2px 8px rgba(0,0,0,0.3);
+      ">${idx + 1}</div>`,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16]
+    });
+
+    const marker = L.marker([lat, lng], { icon });
+    marker.bindTooltip(`${idx + 1}. ${escapeHtml(name)}`, { direction: 'top', offset: [0, -18], className: 'pepite-tooltip' });
+    marker.on('click', () => { if (type === 'pepita') openDetail(obj); else openEventDetail(obj); });
+    group.addLayer(marker);
+  });
+
+  if (coords.length >= 2) {
+    group.addLayer(L.polyline(coords, { color: '#1A1A1A', weight: 2, opacity: 0.5, dashArray: '5, 7' }));
+  }
+
+  itinerarioLayer = group;
+  map.addLayer(itinerarioLayer);
+
+  if (coords.length > 0) {
+    map.fitBounds(L.latLngBounds(coords), { padding: [40, 40], maxZoom: 15 });
+  }
+}
+
+async function shareMyDay(items) {
+  const isEn = currentLang === 'en';
+  const names = items.map(({ type, obj }) =>
+    type === 'pepita' ? obj.nome : ((isEn ? (obj.titolo_en || obj.titolo) : obj.titolo) || ''));
+  const text = t('myDayShareText', names.join(' → '));
+  const appUrl = `${window.location.origin}${window.location.pathname}`;
+  const shareData = { title: t('myDayTitle'), text, url: appUrl };
+  if (navigator.share) {
+    try { await navigator.share(shareData); } catch (_) { /* cancelled */ }
+  } else {
+    window.open(`https://wa.me/?text=${encodeURIComponent(text + '\n' + appUrl)}`);
+  }
+}
+
+function setupMyDayPlan() {
+  document.getElementById('myDayBtn')?.addEventListener('click', () => {
+    navigator.vibrate?.(20);
+    openMyDay();
+  });
+  document.getElementById('myDayClose')?.addEventListener('click', closeMyDay);
+  document.getElementById('myDayOverlay')?.addEventListener('click', (e) => {
+    if (e.target.id === 'myDayOverlay') closeMyDay();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && document.getElementById('myDayOverlay')?.style.display !== 'none') closeMyDay();
+  });
+  document.getElementById('myDayShowMap')?.addEventListener('click', () => {
+    const items = getMyDayItems();
+    if (items.length === 0) return;
+    closeMyDay();
+    showMyDayOnMap(items);
+    closeSidebar();
+  });
+  document.getElementById('myDayShare')?.addEventListener('click', () => {
+    const items = getMyDayItems();
+    if (items.length > 0) shareMyDay(items);
+  });
 }
 
 // ── Eventi del Mese ──
@@ -2694,6 +3089,16 @@ function getFilteredEventi() {
     );
   }
 
+  // Sort by distance when "Near me" is active (falls back to quartiere centroid)
+  if (nearMeActive && userLocation) {
+    const distOf = (e) => {
+      const lat = e.lat || (quartiereCoords[e.quartiere] || [])[0];
+      const lng = e.lng || (quartiereCoords[e.quartiere] || [])[1];
+      return (lat && lng) ? haversineKm(userLocation.lat, userLocation.lng, lat, lng) : Infinity;
+    };
+    grouped.sort((a, b) => distOf(a) - distOf(b));
+  }
+
   return grouped;
 }
 
@@ -2729,6 +3134,16 @@ function _buildEventiCardHTML(e, isEn) {
   const isActive = currentEventDetail && currentEventDetail.id === e.id;
   const isMulti  = !!e._days;
   const dayLabel = e._dateDisplay || e.giorno;
+
+  let distBadge = '';
+  if (nearMeActive && userLocation) {
+    const lat = e.lat || (quartiereCoords[e.quartiere] || [])[0];
+    const lng = e.lng || (quartiereCoords[e.quartiere] || [])[1];
+    if (lat && lng) {
+      distBadge = `<span class="dist-badge">📍 ${formatDist(haversineKm(userLocation.lat, userLocation.lng, lat, lng))}</span>`;
+    }
+  }
+
   return `
   <div class="evento-card${isActive ? ' active' : ''}" data-id="${e.id}" ${e.quartiere ? `data-quartiere="${escapeHtml(e.quartiere)}"` : ''}>
     <div class="evento-date${isMulti ? ' multiday' : ''}">
@@ -2742,6 +3157,7 @@ function _buildEventiCardHTML(e, isEn) {
       <div class="evento-meta-row">
         <span class="evento-badge ${e.badge || ''}">${escapeHtml((isEn ? (e.tag_en || e.tag) : e.tag) || '')}</span>
         ${e.quartiere ? `<span class="evento-quartiere">${escapeHtml(e.quartiere)}</span>` : ''}
+        ${distBadge}
       </div>
     </div>
     <button class="evento-save-btn${e.salvato ? ' saved' : ''}" data-eid="${e.id}" title="${e.salvato ? '❤️' : '♡'}">
@@ -3649,6 +4065,180 @@ function setupStoryViewer() {
   });
 }
 
+
+// ── Global Cross-Domain Search (pepite + eventi + itinerari + storie) ──
+function setupGlobalSearch() {
+  const btn      = document.getElementById('globalSearchBtn');
+  const overlay  = document.getElementById('globalSearchOverlay');
+  const input    = document.getElementById('globalSearchInput');
+  const closeBtn = document.getElementById('globalSearchClose');
+  if (!btn || !overlay || !input) return;
+
+  const open = () => {
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    renderGlobalSearchResults(input.value);
+    setTimeout(() => input.focus(), 50);
+    // Storie/eventi may not be loaded yet — load in background so results are complete
+    if (!eventiLoaded) loadEventiData();
+    if (!storieLoaded) loadStorieData();
+  };
+  const close = () => {
+    overlay.style.display = 'none';
+    document.body.style.overflow = '';
+  };
+
+  btn.addEventListener('click', open);
+  closeBtn?.addEventListener('click', close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && overlay.style.display !== 'none') close();
+  });
+
+  let debounceTimer;
+  input.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => renderGlobalSearchResults(input.value), 150);
+  });
+}
+
+function _gsMatch(haystack, query) {
+  return !!haystack && haystack.toLowerCase().includes(query);
+}
+
+function renderGlobalSearchResults(rawQuery) {
+  const container = document.getElementById('globalSearchResults');
+  if (!container) return;
+  const query = rawQuery.trim().toLowerCase();
+  const isEn  = currentLang === 'en';
+
+  if (query.length < 2) {
+    container.innerHTML = `<div class="gs-empty">${isEn ? 'Type at least 2 characters to search everywhere.' : 'Scrivi almeno 2 caratteri per cercare ovunque.'}</div>`;
+    return;
+  }
+
+  const MAX_PER_GROUP = 5;
+
+  const pepiteResults = pepite.filter(p =>
+    _gsMatch(p.nome, query) || _gsMatch(p.quartiere, query) || _gsMatch(getCat(p), query)
+  ).slice(0, MAX_PER_GROUP);
+
+  const eventiResults = eventi.filter(e => {
+    const titolo = isEn ? (e.titolo_en || e.titolo) : e.titolo;
+    const tag    = isEn ? (e.tag_en || e.tag) : e.tag;
+    return _gsMatch(titolo, query) || _gsMatch(e.quartiere, query) || _gsMatch(tag, query);
+  }).slice(0, MAX_PER_GROUP);
+
+  const itinerariResults = itinerariData.filter(it =>
+    _gsMatch(t(it.titoloKey), query) || _gsMatch(t(it.subKey), query)
+  ).slice(0, MAX_PER_GROUP);
+
+  const storieResults = storieData.filter(s => {
+    const title = s.title?.[currentLang] || s.title?.it || '';
+    const sub   = s.sub?.[currentLang]   || s.sub?.it   || '';
+    return _gsMatch(title, query) || _gsMatch(sub, query);
+  }).slice(0, MAX_PER_GROUP);
+
+  const totalCount = pepiteResults.length + eventiResults.length + itinerariResults.length + storieResults.length;
+
+  if (totalCount === 0) {
+    container.innerHTML = `<div class="gs-empty">${isEn ? `No results for "${escapeHtml(rawQuery.trim())}"` : `Nessun risultato per "${escapeHtml(rawQuery.trim())}"`}</div>`;
+    return;
+  }
+
+  let html = '';
+
+  if (pepiteResults.length) {
+    html += `<span class="gs-group-label">${t('tabPepite')}</span>`;
+    html += pepiteResults.map(p => `
+      <button class="gs-result" data-type="pepita" data-id="${p.id}">
+        <span class="gs-result-emoji">${categoryEmoji[p.categoria] || '✨'}</span>
+        <div class="gs-result-info">
+          <span class="gs-result-name">${escapeHtml(p.nome)}</span>
+          <span class="gs-result-meta">${escapeHtml(p.quartiere)}</span>
+        </div>
+      </button>`).join('');
+  }
+
+  if (eventiResults.length) {
+    html += `<span class="gs-group-label">${t('tabEventi')}</span>`;
+    html += eventiResults.map(e => {
+      const titolo = isEn ? (e.titolo_en || e.titolo) : e.titolo;
+      return `
+      <button class="gs-result" data-type="evento" data-id="${e.id}">
+        <span class="gs-result-emoji">${eventBadgeEmoji[e.badge] || '📅'}</span>
+        <div class="gs-result-info">
+          <span class="gs-result-name">${escapeHtml(titolo)}</span>
+          <span class="gs-result-meta">${escapeHtml(e.giorno)} ${escapeHtml(e.mese)}${e.quartiere ? ' · ' + escapeHtml(e.quartiere) : ''}</span>
+        </div>
+      </button>`;
+    }).join('');
+  }
+
+  if (itinerariResults.length) {
+    html += `<span class="gs-group-label">${t('tabItinerari')}</span>`;
+    html += itinerariResults.map(it => `
+      <button class="gs-result" data-type="itinerario" data-giorno="${it.giorno}">
+        <span class="gs-result-emoji">🗺️</span>
+        <div class="gs-result-info">
+          <span class="gs-result-name">${escapeHtml(t(it.titoloKey))}</span>
+          <span class="gs-result-meta">${escapeHtml(t(it.subKey))}</span>
+        </div>
+      </button>`).join('');
+  }
+
+  if (storieResults.length) {
+    html += `<span class="gs-group-label">${t('storieTab')}</span>`;
+    html += storieResults.map(s => {
+      const title = s.title?.[currentLang] || s.title?.it || '';
+      return `
+      <button class="gs-result" data-type="storia" data-id="${s.id}">
+        <span class="gs-result-emoji">${escapeHtml(s.emoji || '📖')}</span>
+        <div class="gs-result-info">
+          <span class="gs-result-name">${escapeHtml(title)}</span>
+        </div>
+      </button>`;
+    }).join('');
+  }
+
+  container.innerHTML = html;
+  container.querySelectorAll('.gs-result').forEach(btn => {
+    btn.addEventListener('click', () => _openGlobalSearchResult(btn.dataset));
+  });
+}
+
+function _openGlobalSearchResult(data) {
+  document.getElementById('globalSearchOverlay').style.display = 'none';
+  document.body.style.overflow = '';
+  document.getElementById('globalSearchInput').value = '';
+
+  const goToTab = (tabName) => document.querySelector(`.sidebar-tab[data-tab="${tabName}"]`)?.click();
+
+  if (data.type === 'pepita') {
+    goToTab('pepite');
+    const p = pepite.find(x => x.id === +data.id);
+    if (p) openDetail(p);
+  } else if (data.type === 'evento') {
+    goToTab('eventi');
+    const ev = eventi.find(x => x.id === +data.id);
+    if (ev) openEventDetail(ev);
+  } else if (data.type === 'itinerario') {
+    goToTab('itinerari');
+    setTimeout(() => {
+      const card = document.querySelector(`.itinerario-card[data-giorno="${data.giorno}"]`);
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.classList.add('gs-highlight');
+        setTimeout(() => card.classList.remove('gs-highlight'), 1600);
+      }
+    }, 100);
+  } else if (data.type === 'storia') {
+    goToTab('storie');
+    const s = storieData.find(x => x.id === data.id);
+    if (s) openStoria(s);
+  }
+  closeSidebar();
+}
 
 // ── Offline Indicator ──
 function setupOfflineIndicator() {

@@ -33,7 +33,7 @@
         integrity="sha512-mQ77VzAakzdpWdgfL/lM1ksNy89uFgibRQANsNneSTMD/bj0Y/8+94XMwYhnbzx8eki2hrbPpDm0vD0CiT2lcg==" crossorigin="anonymous" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css"
         integrity="sha512-6ZCLMiYwTeli2rVh3XAPxy3YoR5fVxGdH/pz+KMCzRY2M65Emgkw00Yqmhh8qLGeYQ3LbVZGdmOX9KUjSKr0TA==" crossorigin="anonymous" />
-  <link rel="stylesheet" href="styles.css?v=18">
+  <link rel="stylesheet" href="styles.css?v=19">
 
   <title>Mappa - Pepite per Tutti</title>
   
@@ -79,6 +79,9 @@
           <p id="brandSubtitle">Scopri Milano con gli occhi di Pepite per Tutti</p>
         </div>
         <div class="sidebar-header-actions">
+          <button class="global-search-btn" id="globalSearchBtn" aria-label="Cerca ovunque" title="Cerca ovunque">
+            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          </button>
           <div class="lang-toggle" id="langToggle">
             <button class="lang-btn active" data-lang="it">IT</button>
             <button class="lang-btn" data-lang="en">EN</button>
@@ -89,10 +92,9 @@
         </div>
       </div>
 
-      <!-- Sidebar Tabs — MVP1: only Eventi shown; others hidden temporarily -->
       <div class="sidebar-tabs">
         <button class="sidebar-tab active" data-tab="pepite">Pepite</button>
-        <button class="sidebar-tab" data-tab="itinerari" style="display:none">Itinerari</button>
+        <button class="sidebar-tab" data-tab="itinerari">Itinerari</button>
         <button class="sidebar-tab" data-tab="eventi">Eventi</button>
         <button class="sidebar-tab" data-tab="storie" id="tabBtnStorie">Diario</button>
       </div>
@@ -121,6 +123,13 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                 <span id="openNowPillLabel">Aperto ora</span>
               </button>
+            </div>
+            <div class="price-filter-row" id="priceFilterRow">
+              <button class="price-pill active" data-price="all" id="priceAllLabel">Tutte</button>
+              <button class="price-pill" data-price="2">€€</button>
+              <button class="price-pill" data-price="3">€€€</button>
+              <button class="price-pill" data-price="4">€€€€</button>
+              <button class="price-pill" data-price="5">€€€€€</button>
             </div>
           </div>
 
@@ -209,6 +218,14 @@
             <h3>10 Itinerari</h3>
             <p>Itinerari curati per vivere il meglio della città, pepita dopo pepita.</p>
           </div>
+          <button class="my-day-btn" id="myDayBtn">
+            <span class="my-day-btn-icon">🗓️</span>
+            <span class="my-day-btn-text">
+              <strong id="myDayBtnTitle">La mia giornata</strong>
+              <span id="myDayBtnSub">Crea un itinerario dai tuoi preferiti</span>
+            </span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
           <div class="itinerari-list" id="itinerariList"></div>
         </div>
       </div>
@@ -278,7 +295,7 @@
         <button class="map-btn" id="btnLocateMe" title="La mia posizione">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg>
         </button>
-        <button class="map-btn" id="btnSurprise" title="Sorprendimi, su misura" style="display:none">
+        <button class="map-btn" id="btnSurprise" title="Sorprendimi, su misura">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L9.5 8.5 3 9.27l5 4.87L6.82 21 12 17.77 17.18 21 16 14.14l5-4.87-6.5-.77L12 2z"/></svg>
         </button>
         <button class="map-btn" id="btnResetView" title="Vista completa">
@@ -417,10 +434,53 @@
     </button>
   </div>
 
+  <!-- ═══ GLOBAL SEARCH OVERLAY ═══ -->
+  <div class="global-search-overlay" id="globalSearchOverlay" style="display:none" aria-modal="true" role="dialog">
+    <div class="global-search-panel">
+      <div class="global-search-bar">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input type="text" id="globalSearchInput" placeholder="Cerca pepite, eventi, itinerari, storie...">
+        <button class="global-search-close" id="globalSearchClose" aria-label="Chiudi ricerca">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="global-search-results" id="globalSearchResults"></div>
+    </div>
+  </div>
+
+  <!-- ═══ MY DAY PLAN OVERLAY ═══ -->
+  <div class="myday-overlay" id="myDayOverlay" style="display:none" aria-modal="true" role="dialog">
+    <div class="myday-panel">
+      <button class="myday-close" id="myDayClose" aria-label="Chiudi">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+      <h3 class="myday-title" id="myDayTitle">La mia giornata</h3>
+      <p class="myday-sub" id="myDaySub">Ordina le tue tappe preferite e portale con te.</p>
+      <div class="myday-list" id="myDayList"></div>
+      <div class="myday-actions" id="myDayActions" style="display:none">
+        <button class="mood-action-main" id="myDayShowMap">🗺 <span id="myDayShowMapLabel">Mostra sulla mappa</span></button>
+        <button class="mood-action-sec" id="myDayShare"><span id="myDayShareLabel">Condividi</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ONBOARDING OVERLAY (first launch) ═══ -->
+  <div class="onboarding-overlay" id="onboardingOverlay" style="display:none" aria-modal="true" role="dialog">
+    <div class="onboarding-panel">
+      <button class="onboarding-skip" id="onboardingSkip">Salta</button>
+      <div class="onboarding-slide" id="onboardingSlide"></div>
+      <div class="onboarding-dots" id="onboardingDots"></div>
+      <div class="onboarding-nav">
+        <button class="onboarding-btn-back" id="onboardingBack" style="display:none">Indietro</button>
+        <button class="onboarding-btn-next" id="onboardingNext">Avanti</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"
           integrity="sha512-OFs3W4DIZ5ZkrDhBFtsCP6JXtMEDGmhl0QPlmWYBJay40TT1n3gt2Xuw8Pf/iezgW9CdabjkNChRqozl/YADmg==" crossorigin="anonymous"></script>
-  <script src="app.js?v=84"></script>
+  <script src="app.js?v=85"></script>
 </body>
 </html>
