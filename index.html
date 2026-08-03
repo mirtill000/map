@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#F4E1D2">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="description" content="Milano Pepite - Scopri le gemme nascoste di Milano">
+  <!-- Open Graph / Social Sharing -->
+  <meta property="og:type"        content="website">
+  <meta property="og:site_name"   content="Mappa - Pepite per Tutti">
+  <meta property="og:title"       id="ogTitle"       content="Milano Pepite - Scopri le gemme nascoste di Milano">
+  <meta property="og:description" id="ogDescription" content="Le pepite nascoste di Milano: i luoghi autentici selezionati per te.">
+  <meta property="og:image"       id="ogImage"       content="https://ilariavita.com/map/share.webp">
+  <meta property="og:url"         id="ogUrl"         content="https://ilariavita.com/map/">
+  <meta name="twitter:card"                          content="summary_large_image">
+  <meta name="twitter:title"      id="twitterTitle"  content="Milano Pepite">
+  <meta name="twitter:description" id="twitterDescription" content="Le pepite nascoste di Milano.">
+  <meta name="twitter:image"      id="twitterImage"  content="https://ilariavita.com/map/share.webp">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <!-- Preload data.json (needed immediately on Pepite tab) and prefetch lazy JSON (conditional) -->
+  <link rel="preload" href="data.json" as="fetch" crossorigin="anonymous">
+  <link rel="prefetch" href="eventi.json">
+  <link rel="prefetch" href="storie.json">
+  <!-- Leaflet CSS (SRI hash from leafletjs.com official) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous" />
+  <!-- MarkerCluster CSS moved here from <body> to prevent flash of unstyled markers -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css"
+        integrity="sha512-mQ77VzAakzdpWdgfL/lM1ksNy89uFgibRQANsNneSTMD/bj0Y/8+94XMwYhnbzx8eki2hrbPpDm0vD0CiT2lcg==" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css"
+        integrity="sha512-6ZCLMiYwTeli2rVh3XAPxy3YoR5fVxGdH/pz+KMCzRY2M65Emgkw00Yqmhh8qLGeYQ3LbVZGdmOX9KUjSKr0TA==" crossorigin="anonymous" />
+  <link rel="stylesheet" href="styles.css?v=18">
+
+  <title>Mappa - Pepite per Tutti</title>
+  
+  <!-- Google Analytics — loaded ONLY after explicit user consent (see setupAnalyticsConsent in app.js) -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    // Loads gtag.js and activates tracking — called only after consent
+    window._initGA = function() {
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-NKS1NJMW32';
+      document.head.appendChild(s);
+      s.onload = function() {
+        gtag('js', new Date());
+        gtag('config', 'G-NKS1NJMW32', { anonymize_ip: true });
+      };
+    };
+  </script>
+</head>
+<body>
+
+  <!-- ═══ Splash Screen ═══ -->
+  <div class="splash-screen" id="splashScreen">
+    <div class="splash-content">
+      <div class="splash-logo">
+        <span class="splash-letter">P</span>
+      </div>
+      <h1 class="splash-title">Pepite per Tutti</h1>
+      <p class="splash-subtitle">Scopri Milano con gli occhi di Pepite per Tutti</p>
+      <div class="splash-sparkle">✨</div>
+    </div>
+  </div>
+
+  <!-- ═══ App Wrapper ═══ -->
+  <div class="app-wrapper">
+
+    <!-- ═══ LEFT SIDEBAR ═══ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand">
+          <h1 id="brandTitle">Pepite per Tutti</h1>
+          <p id="brandSubtitle">Scopri Milano con gli occhi di Pepite per Tutti</p>
+        </div>
+        <div class="sidebar-header-actions">
+          <div class="lang-toggle" id="langToggle">
+            <button class="lang-btn active" data-lang="it">IT</button>
+            <button class="lang-btn" data-lang="en">EN</button>
+          </div>
+          <button class="sidebar-toggle-close" id="sidebarClose" aria-label="Chiudi menu">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Sidebar Tabs — MVP1: only Eventi shown; others hidden temporarily -->
+      <div class="sidebar-tabs">
+        <button class="sidebar-tab active" data-tab="pepite">Pepite</button>
+        <button class="sidebar-tab" data-tab="itinerari" style="display:none">Itinerari</button>
+        <button class="sidebar-tab" data-tab="eventi">Eventi</button>
+        <button class="sidebar-tab" data-tab="storie" id="tabBtnStorie">Diario</button>
+      </div>
+
+      <!-- ═══ TAB: PEPITE ═══ -->
+      <div class="sidebar-tab-content active" id="tabPepite" data-tab="pepite">
+        <button class="scroll-top-btn" id="pepiteScrollTop" aria-label="Torna all'inizio">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+        </button>
+        <div class="tab-scroll">
+          <!-- Search -->
+          <div class="sidebar-search">
+            <div class="search-bar">
+              <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <input type="text" id="searchInput" placeholder="Nome, zona, categoria...">
+              <button class="search-clear" id="searchClear" aria-label="Cancella ricerca">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </button>
+            </div>
+            <div class="pepite-quick-filters">
+              <button class="near-me-btn" id="nearMeBtn" aria-label="Cerca vicino a me">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+                <span id="nearMeBtnLabel">Vicino a me</span>
+              </button>
+              <button class="near-me-btn" id="openNowPill" aria-label="Filtra aperto ora">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span id="openNowPillLabel">Aperto ora</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Categories -->
+          <div class="sidebar-section sidebar-categories">
+            <span class="section-label">Categorie</span>
+            <nav class="cat-nav" id="catNav">
+              <div class="cat-item active" data-cat="all">
+                <span class="cat-emoji">✨</span>
+                <span class="cat-text">Tutte le Pepite</span>
+                <span class="cat-count" id="countAll">0</span>
+              </div>
+              <div class="cat-item" data-cat="Ristoranti Romantici">
+                <span class="cat-emoji">🕯️</span>
+                <span class="cat-text">Romantici</span>
+                <span class="cat-count" id="countRomantici">0</span>
+              </div>
+              <div class="cat-item" data-cat="Caffè & Bistrot">
+                <span class="cat-emoji">☕</span>
+                <span class="cat-text">Caffè & Bistrot</span>
+                <span class="cat-count" id="countCaffe">0</span>
+              </div>
+              <div class="cat-item" data-cat="Oasi Segrete">
+                <span class="cat-emoji">🌿</span>
+                <span class="cat-text">Oasi Segrete</span>
+                <span class="cat-count" id="countOasi">0</span>
+              </div>
+              <div class="cat-item" data-cat="Cascine">
+                <span class="cat-emoji">🏡</span>
+                <span class="cat-text">Cascine</span>
+                <span class="cat-count" id="countCascine">0</span>
+              </div>
+              <div class="cat-item" data-cat="Aperitivi">
+                <span class="cat-emoji">🍸</span>
+                <span class="cat-text">Aperitivi</span>
+                <span class="cat-count" id="countAperitivi">0</span>
+              </div>
+              <div class="cat-item" data-cat="Botteghe">
+                <span class="cat-emoji">🎨</span>
+                <span class="cat-text">Botteghe</span>
+                <span class="cat-count" id="countBotteghe">0</span>
+              </div>
+              <div class="cat-item" data-cat="Hamburger">
+                <span class="cat-emoji">🍔</span>
+                <span class="cat-text">Hamburger</span>
+                <span class="cat-count" id="countHamburger">0</span>
+              </div>
+              <div class="cat-item" data-cat="Cena tra Amici">
+                <span class="cat-emoji">👫</span>
+                <span class="cat-text">Cena tra Amici</span>
+                <span class="cat-count" id="countCena">0</span>
+              </div>
+              <div class="cat-item" data-cat="Brunch & Colazioni">
+                <span class="cat-emoji">🥐</span>
+                <span class="cat-text">Brunch & Colazioni</span>
+                <span class="cat-count" id="countBrunch">0</span>
+              </div>
+              <div class="cat-item" data-cat="Merende">
+                <span class="cat-emoji">🍦</span>
+                <span class="cat-text">Merende</span>
+                <span class="cat-count" id="countMerende">0</span>
+              </div>
+              <div class="cat-item" data-cat="fav">
+                <span class="cat-emoji">❤️</span>
+                <span class="cat-text">Preferiti</span>
+                <span class="cat-count" id="countFav">0</span>
+              </div>
+            </nav>
+          </div>
+
+          <!-- Pepite List -->
+          <div class="sidebar-list-section">
+            <div class="list-header">
+              <span class="section-label" id="listTitle">Tutte le Pepite</span>
+              <span class="list-count" id="listCount">0 risultati</span>
+            </div>
+            <div class="pepite-list" id="pepiteList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ TAB: ITINERARI ═══ -->
+      <div class="sidebar-tab-content" id="tabItinerari" data-tab="itinerari">
+        <div class="tab-scroll">
+          <div class="tab-intro">
+            <h3>10 Itinerari</h3>
+            <p>Itinerari curati per vivere il meglio della città, pepita dopo pepita.</p>
+          </div>
+          <div class="itinerari-list" id="itinerariList"></div>
+        </div>
+      </div>
+
+      <!-- ═══ TAB: EVENTI ═══ -->
+      <div class="sidebar-tab-content" id="tabEventi" data-tab="eventi">
+        <div class="tab-scroll">
+          <!-- Search + Date quick filters -->
+          <div class="sidebar-search">
+            <div class="search-bar">
+              <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <input type="text" id="eventiSearchInput" placeholder="Cerca eventi...">
+              <button class="search-clear" id="eventiSearchClear" aria-label="Cancella ricerca">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </button>
+            </div>
+            <div class="pepite-quick-filters" id="eventiDateFilters"></div>
+          </div>
+
+          <!-- Category badge filters -->
+          <div class="sidebar-section sidebar-categories">
+            <div class="cat-nav" id="eventiFilters">
+              <button class="eventi-filter-btn active" data-badge="all">Tutti</button>
+            </div>
+          </div>
+
+          <!-- Event List Count -->
+          <div class="list-header">
+            <span class="section-label" id="eventiListTitle">Tutti gli Eventi</span>
+            <span class="list-count" id="eventiListCount">0 eventi</span>
+          </div>
+
+          <div class="eventi-list" id="eventiList"></div>
+        </div>
+      </div>
+
+      <!-- ═══ TAB: STORIE ═══ -->
+      <div class="sidebar-tab-content" id="tabStorie" data-tab="storie">
+        <div class="tab-scroll">
+          <div class="tab-intro">
+            <h3 id="storieTabTitle">Diario di Milano</h3>
+            <p id="storieTabDesc">Narrazioni editoriali per scoprire la città.</p>
+          </div>
+          <div class="storie-list" id="storieList"></div>
+        </div>
+      </div>
+
+    </aside>
+
+    <!-- ═══ CENTER MAP ═══ -->
+    <main class="map-area">
+      <!-- Mobile top bar -->
+      <div class="mobile-topbar" id="mobileTopbar">
+        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" x2="21" y1="6" y2="6"/><line x1="3" x2="21" y1="12" y2="12"/><line x1="3" x2="21" y1="18" y2="18"/></svg>
+        </button>
+        <span class="mobile-brand">Pepite per Tutti</span>
+        <button class="mobile-search-btn" id="mobileSearchBtn" aria-label="Cerca">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </button>
+      </div>
+
+      <div id="map"></div>
+
+      <!-- Map Floating Controls -->
+      <div class="map-controls">
+        <button class="map-btn" id="btnLocateMe" title="La mia posizione">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4"/><path d="M12 18v4"/><path d="M2 12h4"/><path d="M18 12h4"/></svg>
+        </button>
+        <button class="map-btn" id="btnSurprise" title="Sorprendimi, su misura" style="display:none">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L9.5 8.5 3 9.27l5 4.87L6.82 21 12 17.77 17.18 21 16 14.14l5-4.87-6.5-.77L12 2z"/></svg>
+        </button>
+        <button class="map-btn" id="btnResetView" title="Vista completa">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" x2="8" y1="2" y2="18"/><line x1="16" x2="16" y1="6" y2="22"/></svg>
+        </button>
+      </div>
+
+      <!-- Quartiere active filter badge -->
+      <div class="map-quartiere-badge" id="mapQuartiereBadge" style="display:none">
+        <span id="mapQuartiereBadgeName"></span>
+        <button id="mapQuartiereBadgeClear" aria-label="Rimuovi filtro">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Pepita del Giorno — editorial floating card -->
+      <div class="daily-card" id="dailyCard" role="button" tabindex="0" aria-label="Pepita del Giorno"></div>
+
+    </main>
+
+    <!-- ═══ RIGHT DETAIL PANEL ═══ -->
+    <aside class="detail-panel" id="detailPanel">
+      <div class="detail-drag-handle" aria-hidden="true"></div>
+      <div class="detail-header">
+        <picture id="detailPicture">
+          <source id="detailImageWebp" type="image/webp">
+          <img class="detail-image" id="detailImage" src="" alt="" loading="lazy">
+        </picture>
+        <!-- Quartiere mode: emoji hero (shown instead of image) -->
+        <div class="quartiere-emoji-hero" id="quartiereEmojiHero" style="display:none">
+          <span id="quartiereEmojiLarge"></span>
+        </div>
+        <button class="detail-close" id="detailClose">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+        <span class="detail-img-credit" id="detailImgCredit"></span>
+        <button class="detail-save-btn" id="detailSaveBtn" title="Salva">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </button>
+      </div>
+
+      <div class="detail-body">
+        <span class="detail-meta" id="detailMeta"></span>
+        <h2 id="detailNome"></h2>
+        <div class="detail-location">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span id="detailQuartiere"></span>
+        </div>
+        <a class="detail-indirizzo" id="detailIndirizzo" style="display:none" target="_blank" rel="noopener">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span id="detailIndirizzoText"></span>
+        </a>
+        <div class="detail-orari" id="detailOrari" style="display:none">
+          <span id="detailOrariText"></span>
+        </div>
+        <p class="detail-prezzo" id="detailPrezzo"></p>
+        <!-- Quartiere mode: top categories -->
+        <div class="quartiere-cats" id="quartiereCats" style="display:none"></div>
+        <p class="detail-descrizione" id="detailDescrizione"></p>
+
+        <!-- Linked events (shown when this pepita hosts an event) -->
+        <div class="detail-linked-events" id="detailLinkedEvents" style="display:none">
+          <span class="linked-section-label" id="linkedEventsLabel"></span>
+          <div id="linkedEventsList"></div>
+        </div>
+
+        <!-- Fonti: social / website bento-box chips -->
+        <div class="detail-fonti" id="detailFonti" style="display:none"></div>
+
+        <div class="detail-actions">
+          <button class="btn-action btn-secondary" id="detailMapsBtn" style="display:none">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Apri in Maps
+          </button>
+          <button class="btn-action btn-main" id="detailShareBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+            Condividi
+          </button>
+          <button class="btn-action btn-secondary" id="detailDirectionsBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+            Indicazioni
+          </button>
+        </div>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- Mobile overlay backdrop -->
+  <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+  <!-- Offline Banner -->
+  <div class="offline-banner" id="offlineBanner" role="alert" aria-live="polite" style="display:none">
+    <span>📡</span>
+    <span id="offlineBannerText">Sei offline — usando dati in cache</span>
+  </div>
+
+  <!-- Install Banner -->
+
+  <!-- ═══ ANALYTICS CONSENT BANNER ═══ -->
+  <div class="ga-consent-banner" id="gaConsentBanner" style="display:none"
+       role="dialog" aria-modal="true" aria-label="Consenso analytics">
+    <p class="ga-consent-text">
+      Usiamo <strong>Google Analytics</strong> per capire come viene usata l'app e migliorarla.
+      Nessun dato personale viene condiviso.
+    </p>
+    <div class="ga-consent-actions">
+      <button class="ga-btn ga-btn-decline" id="gaBtnDecline">Rifiuto</button>
+      <button class="ga-btn ga-btn-accept" id="gaBtnAccept">Accetto</button>
+    </div>
+  </div>
+
+  <!-- ═══ MOOD MATCHER OVERLAY ═══ -->
+  <div class="mood-overlay" id="moodOverlay" style="display:none" aria-modal="true" role="dialog">
+    <div class="mood-panel">
+      <button class="mood-close" id="moodClose" aria-label="Chiudi">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+      <div class="mood-wizard" id="moodWizard"></div>
+    </div>
+  </div>
+
+  <!-- ═══ STORY VIEWER OVERLAY ═══ -->
+  <div class="story-overlay" id="storyOverlay" style="display:none" aria-modal="true" role="dialog">
+    <div class="story-progress-bars" id="storyProgressBars"></div>
+    <button class="story-close" id="storyClose" aria-label="Chiudi storia">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    </button>
+    <div class="story-slide-wrap" id="storySlideWrap"></div>
+    <div class="story-tags-bar" id="storyTagsBar" style="display:none"></div>
+    <button class="story-nav story-nav-prev" id="storyPrev" aria-label="Slide precedente">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <button class="story-nav story-nav-next" id="storyNext" aria-label="Slide successiva">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"
+          integrity="sha512-OFs3W4DIZ5ZkrDhBFtsCP6JXtMEDGmhl0QPlmWYBJay40TT1n3gt2Xuw8Pf/iezgW9CdabjkNChRqozl/YADmg==" crossorigin="anonymous"></script>
+  <script src="app.js?v=83"></script>
+</body>
+</html>
