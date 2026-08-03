@@ -2904,6 +2904,12 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
   background: rgba(0,0,0,0.35);
 }
 
+/* Mobile-only editorial preview inside the Pepite tab's bottom sheet — hidden on
+   desktop, where the sidebar already shows everything at once with no sheet.
+   Declared *before* the responsive block below so its mobile override (same
+   specificity) actually wins in the cascade instead of being shadowed by source order. */
+.mobile-editorial-preview { display: none; }
+
 /* ════════════════════════════════════════
    RESPONSIVE
    ════════════════════════════════════════ */
@@ -3509,8 +3515,4 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
 }
 .myday-hint:hover { background: var(--border); border-color: var(--text); }
 .myday-hint-icon { font-size: 1rem; flex-shrink: 0; }
-
-/* Mobile-only editorial preview inside the Pepite tab's bottom sheet — hidden on
-   desktop, where the sidebar already shows everything at once with no sheet. */
-.mobile-editorial-preview { display: none; }
 

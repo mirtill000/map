@@ -25,7 +25,7 @@ There is no build, lint, or test tooling in this repo (no package.json, no test 
 
 - Serve the directory with any static file server from the repo root, e.g. `python3 -m http.server 8000`, then open `http://localhost:8000/`.
 - The service worker (`sw.js`) hardcodes `/beta/` as its scope prefix for cached asset paths (`ASSETS` array) — if you serve from a different path/port, cache-first behavior for the app shell won't match. When testing SW/offline behavior specifically, either serve under a `/beta/` path or adjust `ASSETS` temporarily (don't commit that adjustment unless the deploy path is actually changing).
-- Cache-busting: `styles.css` and `app.js` are referenced from `index.html` with `?v=N` query strings (currently `styles.css?v=22`, `app.js?v=90`). **Bump these version numbers whenever you change `styles.css` or `app.js`**, or returning visitors' service-worker/browser caches will keep serving stale code.
+- Cache-busting: `styles.css` and `app.js` are referenced from `index.html` with `?v=N` query strings (currently `styles.css?v=23`, `app.js?v=90`). **Bump these version numbers whenever you change `styles.css` or `app.js`**, or returning visitors' service-worker/browser caches will keep serving stale code.
 - No automated tests exist. Verify changes manually in a browser (desktop + mobile viewport — the layout has distinct mobile behavior for the sidebar/detail panel).
 
 ## Architecture
