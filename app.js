@@ -110,6 +110,8 @@ const i18n = {
     orari: 'Orari',
     share: 'Condividi',
     directions: 'Indicazioni',
+    save: 'Salva',
+    unsave: 'Rimuovi dai salvati',
     quartieriTitle: 'I Quartieri di Milano',
     quartieriDesc: 'Ogni rione ha la sua anima. Scopri le pepite nascoste in ogni angolo della città.',
     itinerariTitle: '10 Itinerari',
@@ -280,6 +282,8 @@ const i18n = {
     orari: 'Hours',
     share: 'Share',
     directions: 'Directions',
+    save: 'Save',
+    unsave: 'Remove from saved',
     quartieriTitle: "Milan's Neighborhoods",
     quartieriDesc: 'Every district has its own soul. Discover the hidden gems in every corner of the city.',
     itinerariTitle: '10 Itineraries',
@@ -518,6 +522,13 @@ function setupAnalyticsConsent() {
     localStorage.setItem('ga_consent', 'no');
     banner.style.display = 'none';
   });
+}
+
+// ── HTML escaping ──
+const _ESCAPE_HTML_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+/** Escape a value for safe interpolation into innerHTML (text content or quoted attribute). */
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, ch => _ESCAPE_HTML_MAP[ch]);
 }
 
 // ── JSON helpers ──
@@ -809,7 +820,7 @@ function renderFonti(fontiRaw) {
     const meta = _classifyFonte(url);
     if (!meta) return '';
     return `<a class="fonte-chip fonte-${meta.type}"
-               href="${url}"
+               href="${escapeHtml(url)}"
                target="_blank"
                rel="noopener noreferrer"
                aria-label="${meta.label}">
@@ -905,16 +916,17 @@ function renderPepiteList() {
 
   if (filtered.length === 0) {
     const query   = document.getElementById('searchInput')?.value.trim() || '';
+    const queryEsc = escapeHtml(query);
     const isEn    = currentLang === 'en';
     const catLabel = currentFilter !== 'all'
-      ? (titles[currentFilter] || currentFilter).replace(/^[^\w]+/, '').trim()
+      ? escapeHtml((titles[currentFilter] || currentFilter).replace(/^[^\w]+/, '').trim())
       : '';
     let msg, sub;
     if (query && catLabel) {
-      msg = isEn ? `No "${catLabel}" for "${query}"` : `Nessuna ${catLabel} per "${query}"`;
+      msg = isEn ? `No "${catLabel}" for "${queryEsc}"` : `Nessuna ${catLabel} per "${queryEsc}"`;
       sub = isEn ? 'Try removing the search or changing category.' : 'Prova a rimuovere la ricerca o cambiare categoria.';
     } else if (query) {
-      msg = isEn ? `No results for "${query}"` : `Nessun risultato per "${query}"`;
+      msg = isEn ? `No results for "${queryEsc}"` : `Nessun risultato per "${queryEsc}"`;
       sub = isEn ? 'Try a different search term.' : 'Prova con un termine diverso.';
     } else if (catLabel) {
       msg = isEn ? `No ${catLabel} found` : `Nessuna ${catLabel} trovata`;
@@ -956,11 +968,11 @@ function renderPepiteList() {
       <div class="pepita-item${isActive ? ' active' : ''}" data-id="${p.id}">
         ${_pictureHtml(p.immagine, p.nome, 'pepita-item-img')}
         <div class="pepita-item-info">
-          <h4>${p.nome}</h4>
-          <span class="pepita-zone">${p.quartiere} · ${categoryEmoji[p.categoria] || '✨'} ${p.categoria.split(' ')[0]}${openBadge}</span>
+          <h4>${escapeHtml(p.nome)}</h4>
+          <span class="pepita-zone">${escapeHtml(p.quartiere)} · ${categoryEmoji[p.categoria] || '✨'} ${escapeHtml(getCat(p).split(' ')[0])}${openBadge}</span>
           ${distBadge}
         </div>
-        <button class="pepita-save-btn${p.salvato ? ' saved' : ''}" data-id="${p.id}" title="${p.salvato ? 'Rimuovi dai salvati' : 'Salva'}">
+        <button class="pepita-save-btn${p.salvato ? ' saved' : ''}" data-id="${p.id}" title="${p.salvato ? t('unsave') : t('save')}">
           <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="${p.salvato ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         </button>
       </div>`;
@@ -1066,7 +1078,7 @@ function renderMarkers() {
     const marker = L.marker([p.lat, p.lng], { icon })
       .on('click', () => openDetail(p));
 
-    marker.bindTooltip(p.nome, {
+    marker.bindTooltip(escapeHtml(p.nome), {
       direction: 'top',
       offset: [0, -20],
       className: 'pepite-tooltip'
@@ -1193,7 +1205,7 @@ function renderEventiMarkers(activeId) {
     const isEn  = currentLang === 'en';
     const title = (isEn ? (ev.titolo_en || ev.titolo) : ev.titolo) || '';
     const dateLabel = (ev._dateDisplay || ev.giorno) + ' ' + ev.mese;
-    marker.bindTooltip(`${title} · ${dateLabel}`,
+    marker.bindTooltip(`${escapeHtml(title)} · ${escapeHtml(dateLabel)}`,
       { direction: 'top', offset: [0, -22], className: 'pepite-tooltip' });
     marker.on('click', () => openEventDetail(ev));
 
@@ -1253,7 +1265,7 @@ function setupPepiteList() {
         toggleSave(p);
         // Update button visually without full re-render
         saveBtn.classList.toggle('saved', p.salvato);
-        saveBtn.title = p.salvato ? 'Rimuovi dai salvati' : 'Salva';
+        saveBtn.title = p.salvato ? t('unsave') : t('save');
         saveBtn.querySelector('svg').setAttribute('fill', p.salvato ? 'currentColor' : 'none');
       }
       return;
@@ -1295,9 +1307,9 @@ function _pictureHtml(src, alt, className, extra = '') {
   const hasFallback = webp !== src; // only add <source> if URL actually differs
   return `<picture>${
     hasFallback
-      ? `<source type="image/webp" data-srcset="${webp}">`
+      ? `<source type="image/webp" data-srcset="${escapeHtml(webp)}">`
       : ''
-  }<img class="${className}" src="${_IMG_PLACEHOLDER}" data-src="${src}" alt="${alt}" ${extra}></picture>`;
+  }<img class="${className}" src="${_IMG_PLACEHOLDER}" data-src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" ${extra}></picture>`;
 }
 
 function setupImgLazyLoad() {
@@ -1859,8 +1871,8 @@ function openDetail(p) {
           : '';
         return `<button class="linked-event-pill" data-ev-id="${ev.id}">
           <span class="linked-ev-emoji">${eventBadgeEmoji[ev.badge] || '📌'}</span>
-          <span class="linked-ev-title">${title}</span>
-          <span class="linked-ev-date">${dateLabel}</span>${multiTag}
+          <span class="linked-ev-title">${escapeHtml(title)}</span>
+          <span class="linked-ev-date">${escapeHtml(dateLabel)}</span>${multiTag}
         </button>`;
       }).join('');
       linkedEvSection.style.display = '';
@@ -1966,7 +1978,7 @@ function openQuartiereDetail(q) {
   const catsEl = document.getElementById('quartiereCats');
   catsEl.style.display = 'flex';
   catsEl.innerHTML = topCats.map(([cat, n]) =>
-    `<span class="q-cat-tag">${categoryEmoji[cat] || '✨'} ${cat}</span>`
+    `<span class="q-cat-tag">${categoryEmoji[cat] || '✨'} ${escapeHtml(cat)}</span>`
   ).join('');
 
   // Description
@@ -2538,10 +2550,10 @@ function buildEventiFilters() {
   const savedCount = groupEventi([...eventi.filter(e => e.salvato)].sort((a, b) => parseInt(a.giorno, 10) - parseInt(b.giorno, 10))).length;
   container.innerHTML = `<button class="eventi-filter-btn${currentEventFilter === 'all' ? ' active' : ''}" data-badge="all">${t('eventiFilterAll')} <span class="eventi-filter-count">${allCount}</span></button>` +
     badges.map(b => {
-      const label = badgeLabels[b] ? (isEn ? badgeLabels[b].en : badgeLabels[b].it) : b;
+      const label = badgeLabels[b] ? (isEn ? badgeLabels[b].en : badgeLabels[b].it) : escapeHtml(b);
       const emoji = eventBadgeEmoji[b] || '📌';
       const count = baseGrouped.filter(e => e.badge === b).length;
-      return `<button class="eventi-filter-btn${currentEventFilter === b ? ' active' : ''}" data-badge="${b}">${emoji} ${label} <span class="eventi-filter-count">${count}</span></button>`;
+      return `<button class="eventi-filter-btn${currentEventFilter === b ? ' active' : ''}" data-badge="${escapeHtml(b)}">${emoji} ${label} <span class="eventi-filter-count">${count}</span></button>`;
     }).join('') +
     `<button class="eventi-filter-btn${currentEventFilter === 'fav' ? ' active' : ''}" data-badge="fav">${t('eventiFilterFav')} ${savedCount > 0 ? `<span class="eventi-filter-count">${savedCount}</span>` : ''}</button>`;
 
@@ -2718,18 +2730,18 @@ function _buildEventiCardHTML(e, isEn) {
   const isMulti  = !!e._days;
   const dayLabel = e._dateDisplay || e.giorno;
   return `
-  <div class="evento-card${isActive ? ' active' : ''}" data-id="${e.id}" ${e.quartiere ? `data-quartiere="${e.quartiere}"` : ''}>
+  <div class="evento-card${isActive ? ' active' : ''}" data-id="${e.id}" ${e.quartiere ? `data-quartiere="${escapeHtml(e.quartiere)}"` : ''}>
     <div class="evento-date${isMulti ? ' multiday' : ''}">
-      <span class="day">${dayLabel}</span>
-      <span class="month">${e.mese}</span>
+      <span class="day">${escapeHtml(dayLabel)}</span>
+      <span class="month">${escapeHtml(e.mese)}</span>
       ${isMulti ? `<span class="multiday-count">${e._days.length}g</span>` : ''}
     </div>
     <div class="evento-info">
-      <h4>${isEn ? (e.titolo_en || e.titolo) : e.titolo}</h4>
-      <p>${(isEn ? (e.descrizione_en || e.desc_en || e.descrizione || e.desc) : (e.descrizione || e.desc)) || ''}</p>
+      <h4>${escapeHtml(isEn ? (e.titolo_en || e.titolo) : e.titolo)}</h4>
+      <p>${escapeHtml((isEn ? (e.descrizione_en || e.desc_en || e.descrizione || e.desc) : (e.descrizione || e.desc)) || '')}</p>
       <div class="evento-meta-row">
-        <span class="evento-badge ${e.badge || ''}">${(isEn ? (e.tag_en || e.tag) : e.tag) || ''}</span>
-        ${e.quartiere ? `<span class="evento-quartiere">${e.quartiere}</span>` : ''}
+        <span class="evento-badge ${e.badge || ''}">${escapeHtml((isEn ? (e.tag_en || e.tag) : e.tag) || '')}</span>
+        ${e.quartiere ? `<span class="evento-quartiere">${escapeHtml(e.quartiere)}</span>` : ''}
       </div>
     </div>
     <button class="evento-save-btn${e.salvato ? ' saved' : ''}" data-eid="${e.id}" title="${e.salvato ? '❤️' : '♡'}">
@@ -2794,18 +2806,19 @@ function renderEventi() {
 
   if (_evAllItems.length === 0) {
     const query    = document.getElementById('eventiSearchInput')?.value.trim() || '';
+    const queryEsc = escapeHtml(query);
     const dateLabel = currentDateFilter === 'oggi'
       ? (isEn ? 'today' : 'oggi')
       : currentDateFilter === 'weekend' ? 'weekend' : '';
     const catLabel = currentEventFilter !== 'all' && currentEventFilter !== 'saved'
-      ? currentEventFilter : '';
+      ? escapeHtml(currentEventFilter) : '';
 
     let msg, sub;
     const parts = [catLabel, dateLabel].filter(Boolean);
     if (query && parts.length) {
-      msg = isEn ? `No "${parts.join(' · ')}" events for "${query}"` : `Nessun evento "${parts.join(' · ')}" per "${query}"`;
+      msg = isEn ? `No "${parts.join(' · ')}" events for "${queryEsc}"` : `Nessun evento "${parts.join(' · ')}" per "${queryEsc}"`;
     } else if (query) {
-      msg = isEn ? `No results for "${query}"` : `Nessun risultato per "${query}"`;
+      msg = isEn ? `No results for "${queryEsc}"` : `Nessun risultato per "${queryEsc}"`;
     } else if (parts.length) {
       msg = isEn ? `No ${parts.join(' · ')} events` : `Nessun evento ${parts.join(' · ')}`;
     } else {
@@ -2915,18 +2928,18 @@ function openEventDetail(ev) {
     let quandoHTML;
     if (ev._days && ev._days.length > 1) {
       quandoHTML = ev._days.map(d => {
-        const dateStr = `${d.giorno} ${d.mese}`;
-        return d.orario ? `${dateStr} · ${d.orario}` : dateStr;
+        const dateStr = `${escapeHtml(d.giorno)} ${escapeHtml(d.mese)}`;
+        return d.orario ? `${dateStr} · ${escapeHtml(d.orario)}` : dateStr;
       }).join('<br>');
     } else {
-      const dateStr = `${ev.giorno} ${ev.mese}`;
-      quandoHTML = ev.orario ? `${dateStr} · ${ev.orario}` : dateStr;
+      const dateStr = `${escapeHtml(ev.giorno)} ${escapeHtml(ev.mese)}`;
+      quandoHTML = ev.orario ? `${dateStr} · ${escapeHtml(ev.orario)}` : dateStr;
     }
     descHTML += `<div class="evento-detail-row"><strong>${t('eventiWhen')}:</strong> ${quandoHTML}</div>`;
     if (luogo) {
-      descHTML += `<div class="evento-detail-row"><strong>${t('eventiWhere')}:</strong> ${luogo}</div>`;
+      descHTML += `<div class="evento-detail-row"><strong>${t('eventiWhere')}:</strong> ${escapeHtml(luogo)}</div>`;
     }
-    if (prezzo) descHTML += `<div class="evento-detail-row"><strong>${t('eventiPrice')}:</strong> ${prezzo}</div>`;
+    if (prezzo) descHTML += `<div class="evento-detail-row"><strong>${t('eventiPrice')}:</strong> ${escapeHtml(prezzo)}</div>`;
     descHTML += '</div>';
   }
 
@@ -2937,7 +2950,7 @@ function openEventDetail(ev) {
     const pEmoji = categoryEmoji[lp.categoria] || '✨';
     return `<div class="linked-pepita-block" data-pepita-id="${lp.id}">
       <span class="linked-pepita-lbl">${t('linkedPepitaLabel')}</span>
-      <span class="linked-pepita-name">${pEmoji} ${lp.nome}</span>
+      <span class="linked-pepita-name">${pEmoji} ${escapeHtml(lp.nome)}</span>
       <span class="linked-pepita-arrow">→</span>
     </div>`;
   };
@@ -2945,7 +2958,7 @@ function openEventDetail(ev) {
 
   // Source link
   if (ev.url) {
-    descHTML += `<a class="evento-source-link" href="${ev.url}" target="_blank" rel="noopener noreferrer">
+    descHTML += `<a class="evento-source-link" href="${escapeHtml(ev.url)}" target="_blank" rel="noopener noreferrer">
       <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
       ${t('eventiSource')}
     </a>`;
@@ -3372,14 +3385,14 @@ function renderStorie() {
     const pepiteChips = (storia.tags?.pepite || []).map(name => {
       const p = pepite.find(x => x.nome.includes(name) || name.includes(x.nome));
       return p
-        ? `<button class="storia-tag storia-tag--pepita" data-type="pepita" data-id="${p.id}">${categoryEmoji[p.categoria] || '✨'} ${p.nome}</button>`
+        ? `<button class="storia-tag storia-tag--pepita" data-type="pepita" data-id="${p.id}">${categoryEmoji[p.categoria] || '✨'} ${escapeHtml(p.nome)}</button>`
         : null;
     }).filter(Boolean).join('');
 
     const eventiChips = (storia.tags?.eventi || []).map(t => {
       const ev = eventi.find(x => x.titolo && (x.titolo.includes(t) || t.includes(x.titolo)));
       return ev
-        ? `<button class="storia-tag storia-tag--evento" data-type="evento" data-id="${ev.id}">${eventBadgeEmoji[ev.badge] || '📅'} ${ev.titolo}</button>`
+        ? `<button class="storia-tag storia-tag--evento" data-type="evento" data-id="${ev.id}">${eventBadgeEmoji[ev.badge] || '📅'} ${escapeHtml(ev.titolo)}</button>`
         : null;
     }).filter(Boolean).join('');
 
@@ -3389,13 +3402,13 @@ function renderStorie() {
 
     return `
       <div class="storia-card" data-id="${storia.id}">
-        <div class="storia-cover" style="${coverImg ? `background-image:image-set(url('${_webpUrl(coverImg)}') type('image/webp'), url('${coverImg}') type('image/jpeg'))` : ''}">
+        <div class="storia-cover" style="${coverImg ? `background-image:image-set(url('${escapeHtml(_webpUrl(coverImg))}') type('image/webp'), url('${escapeHtml(coverImg)}') type('image/jpeg'))` : ''}">
           <div class="storia-cover-overlay"></div>
           <div class="storia-cover-info">
-            <span class="storia-emoji">${storia.emoji}</span>
+            <span class="storia-emoji">${escapeHtml(storia.emoji)}</span>
             <div>
-              <h4 class="storia-title">${title}</h4>
-              <p class="storia-sub">${sub}</p>
+              <h4 class="storia-title">${escapeHtml(title)}</h4>
+              <p class="storia-sub">${escapeHtml(sub)}</p>
             </div>
           </div>
           <span class="storia-slides-count">${storia.slides.length - 1} slide</span>
@@ -3466,7 +3479,7 @@ function buildStoryTags(storia) {
   bar.style.display = '';
   bar.innerHTML = all.map(item =>
     `<button class="story-tag-chip story-tag-chip--${item.type}" data-type="${item.type}" data-id="${item.id}">
-      <span>${item.emoji}</span><span>${item.label}</span>
+      <span>${escapeHtml(item.emoji)}</span><span>${escapeHtml(item.label)}</span>
     </button>`
   ).join('');
 
@@ -3514,7 +3527,7 @@ function renderSlide(idx) {
     return p?.immagine || '';
   })();
   const bgStyle = bgImg
-    ? `style="background-image:image-set(url('${_webpUrl(bgImg)}') type('image/webp'), url('${bgImg}') type('image/jpeg'))"`
+    ? `style="background-image:image-set(url('${escapeHtml(_webpUrl(bgImg))}') type('image/webp'), url('${escapeHtml(bgImg)}') type('image/jpeg'))"`
     : '';
 
   if (slide.type === 'cover') {
@@ -3524,9 +3537,9 @@ function renderSlide(idx) {
       <div class="story-slide story-slide-cover" ${bgStyle}>
         <div class="story-slide-gradient"></div>
         <div class="story-slide-cover-content">
-          <span class="story-cover-emoji">${currentStoria.emoji}</span>
-          <h2 class="story-cover-title">${title}</h2>
-          <p class="story-cover-sub">${sub}</p>
+          <span class="story-cover-emoji">${escapeHtml(currentStoria.emoji)}</span>
+          <h2 class="story-cover-title">${escapeHtml(title)}</h2>
+          <p class="story-cover-sub">${escapeHtml(sub)}</p>
         </div>
       </div>`;
   } else {
@@ -3539,12 +3552,12 @@ function renderSlide(idx) {
       <div class="story-slide story-slide-text" ${bgStyle}>
         <div class="story-slide-gradient"></div>
         <div class="story-slide-content">
-          ${slide.ora ? `<span class="story-ora">${slide.ora}</span>` : ''}
-          <h3 class="story-slide-title">${title}</h3>
-          <p class="story-slide-body">${body}</p>
+          ${slide.ora ? `<span class="story-ora">${escapeHtml(slide.ora)}</span>` : ''}
+          <h3 class="story-slide-title">${escapeHtml(title)}</h3>
+          <p class="story-slide-body">${escapeHtml(body)}</p>
           ${(p || ev) ? `<div class="story-cta-row">
-            ${p  ? `<button class="story-pepita-btn" data-pepita-id="${p.id}"><span>${categoryEmoji[p.categoria] || '✨'}</span><span>${p.nome}</span>${_arrowSvg}</button>` : ''}
-            ${ev ? `<button class="story-evento-btn" data-evento-id="${ev.id}"><span>${eventBadgeEmoji[ev.badge] || '📅'}</span><span>${ev.titolo}</span>${_arrowSvg}</button>` : ''}
+            ${p  ? `<button class="story-pepita-btn" data-pepita-id="${p.id}"><span>${categoryEmoji[p.categoria] || '✨'}</span><span>${escapeHtml(p.nome)}</span>${_arrowSvg}</button>` : ''}
+            ${ev ? `<button class="story-evento-btn" data-evento-id="${ev.id}"><span>${eventBadgeEmoji[ev.badge] || '📅'}</span><span>${escapeHtml(ev.titolo)}</span>${_arrowSvg}</button>` : ''}
           </div>` : ''}
         </div>
       </div>`;
@@ -3838,8 +3851,8 @@ function renderMoodResult(wizard) {
             <span class="ms-time">${slots[i]}</span>
             <span class="ms-emoji">${categoryEmoji[p.categoria] || '✨'}</span>
             <div class="ms-info">
-              <strong>${p.nome}</strong>
-              <span>${p.quartiere}</span>
+              <strong>${escapeHtml(p.nome)}</strong>
+              <span>${escapeHtml(p.quartiere)}</span>
             </div>
           </div>
         `).join('')}
@@ -3888,7 +3901,7 @@ function showMoodResultOnMap(pepiteList) {
       iconSize: [32, 32], iconAnchor: [16, 16]
     });
     const marker = L.marker([p.lat, p.lng], { icon });
-    marker.bindTooltip(`${idx + 1}. ${p.nome}`, { direction: 'top', offset: [0, -18], className: 'pepite-tooltip' });
+    marker.bindTooltip(`${idx + 1}. ${escapeHtml(p.nome)}`, { direction: 'top', offset: [0, -18], className: 'pepite-tooltip' });
     marker.on('click', () => {
   // 1. Mantiene la tua funzione originale per aprire i dettagli
   openDetail(p); 
@@ -4220,19 +4233,19 @@ function renderDailyCard() {
   const dailyImgSrc  = daily.immagine || fallbackSvg;
   const dailyImgWebp = _webpUrl(dailyImgSrc);
   const dailyPicture = dailyImgWebp !== dailyImgSrc
-    ? `<picture><source type="image/webp" srcset="${dailyImgWebp}"><img class="daily-img" src="${dailyImgSrc}" alt="${daily.nome}" loading="lazy"></picture>`
-    : `<img class="daily-img" src="${dailyImgSrc}" alt="${daily.nome}" loading="lazy">`;
+    ? `<picture><source type="image/webp" srcset="${escapeHtml(dailyImgWebp)}"><img class="daily-img" src="${escapeHtml(dailyImgSrc)}" alt="${escapeHtml(daily.nome)}" loading="lazy"></picture>`
+    : `<img class="daily-img" src="${escapeHtml(dailyImgSrc)}" alt="${escapeHtml(daily.nome)}" loading="lazy">`;
   container.innerHTML = `
     <span class="daily-badge">${label}</span>
     ${dailyPicture}
     <div class="daily-info">
-      <span class="daily-cat">${emoji} ${daily.categoria}</span>
-      <h3>${daily.nome}</h3>
-      <p class="daily-perche">${perche}</p>
+      <span class="daily-cat">${emoji} ${escapeHtml(daily.categoria)}</span>
+      <h3>${escapeHtml(daily.nome)}</h3>
+      <p class="daily-perche">${escapeHtml(perche)}</p>
       ${paired ? `
       <div class="daily-abbina">
         <span class="daily-abbina-lbl">${abbinaL}</span>
-        <span class="daily-abbina-name" data-id="${paired.id}">${pEmoji} ${paired.nome}</span>
+        <span class="daily-abbina-name" data-id="${paired.id}">${pEmoji} ${escapeHtml(paired.nome)}</span>
       </div>` : ''}
     </div>
   `;
