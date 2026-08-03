@@ -2910,6 +2910,15 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
    specificity) actually wins in the cascade instead of being shadowed by source order. */
 .mobile-editorial-preview { display: none; }
 
+/* Keyboard focus ring for list cards made keyboard-operable (role="button" + tabindex="0") */
+.pepita-item:focus-visible,
+.evento-card:focus-visible,
+.itinerario-stop:focus-visible,
+.med-story:focus-visible {
+  outline: 2px solid var(--accent-rosa-deep);
+  outline-offset: 2px;
+}
+
 /* ════════════════════════════════════════
    RESPONSIVE
    ════════════════════════════════════════ */
@@ -3241,6 +3250,10 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
   transition: all var(--transition);
 }
 .my-day-btn:hover { border-color: var(--text); box-shadow: var(--card-shadow-hover); }
+/* Live preview state: at least one favourite is already in the plan, so the card
+   shows real content instead of the same generic prompt every visitor sees. */
+.my-day-btn.has-plan { border-color: var(--accent-salvia-deep); background: var(--gray-light); }
+.my-day-btn.has-plan .my-day-btn-text span:last-child { color: var(--accent-salvia-deep); font-weight: 600; }
 .my-day-btn-icon { font-size: 1.4rem; flex-shrink: 0; }
 .my-day-btn-text { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
 .my-day-btn-text strong { font-size: 0.88rem; }
@@ -3292,6 +3305,35 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
 
 .myday-title { font-family: var(--font-serif); font-size: 1.2rem; margin-bottom: 4px; }
 .myday-sub { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 18px; }
+
+/* Shown only when this overlay was opened from a shared #giornata= link, before the
+   viewer has adopted the plan into their own favourites. */
+.myday-shared-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  background: var(--gray-light);
+  border: 1px solid var(--accent-rosa-deep);
+  border-radius: var(--radius-sm);
+  font-size: 0.76rem;
+  color: var(--text);
+}
+.myday-shared-banner span { flex: 1; }
+.myday-shared-save-btn {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--accent-rosa-deep);
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.myday-shared-save-btn:hover { opacity: 0.88; }
+.myday-shared-save-btn:disabled { opacity: 0.5; cursor: default; }
 
 .myday-list {
   display: flex;
@@ -3515,4 +3557,13 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
 }
 .myday-hint:hover { background: var(--border); border-color: var(--text); }
 .myday-hint-icon { font-size: 1rem; flex-shrink: 0; }
+
+/* Mood Matcher CTA reuses the "hint" style but with a solid accent border so it
+   reads as a distinct, discoverable feature rather than the My Day reminder. */
+.mood-matcher-hint {
+  border-style: solid;
+  border-color: var(--accent-rosa-deep);
+  color: var(--accent-rosa-deep);
+}
+.mood-matcher-hint:hover { background: var(--accent-rosa-deep); border-color: var(--accent-rosa-deep); color: #fff; }
 
