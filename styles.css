@@ -3558,12 +3558,8 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
 .myday-hint:hover { background: var(--border); border-color: var(--text); }
 .myday-hint-icon { font-size: 1rem; flex-shrink: 0; }
 
-/* Mood Matcher CTA reuses the "hint" style but with a solid accent border so it
-   reads as a distinct, discoverable feature rather than the My Day reminder. */
-.mood-matcher-hint {
-  border-style: solid;
-  border-color: var(--accent-rosa-deep);
-  color: var(--accent-rosa-deep);
-}
-.mood-matcher-hint:hover { background: var(--accent-rosa-deep); border-color: var(--accent-rosa-deep); color: #fff; }
+/* Mood Matcher CTA reuses the "hint" style, just with a tinted dashed border so it
+   reads as its own feature without breaking the app's otherwise restrained palette. */
+.mood-matcher-hint { border-color: var(--accent-rosa-deep); }
+.mood-matcher-hint:hover { background: var(--gray-light); border-color: var(--accent-rosa-deep); }
 
