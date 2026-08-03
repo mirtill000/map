@@ -171,10 +171,31 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Cache-first for app shell
+  // App shell — network-first, falling back to cache when offline.
+  // app.js/styles.css are requested with a cache-busting "?v=N" query string that changes
+  // on every deploy, but the entries cached at install time have no query string at all.
+  // caches.match() does an exact-URL match by default, so it would never find those entries
+  // for a versioned request — meaning a plain cache-first strategy here would always miss
+  // and hit the network anyway while online, then have *no* fallback at all when offline
+  // (the fetch simply fails). Fetching from the network first and only falling back to the
+  // cache — ignoring the query string — when that fails gives the same freshness online
+  // while actually working offline, and keeps the cache up to date as new versions land.
   if (ASSETS.some(a => path === a || path.endsWith(a.replace(/^\//, '')))) {
     e.respondWith(
-      caches.match(e.request).then(cached => cached || fetch(e.request))
+      (async () => {
+        try {
+          const fresh = await fetch(e.request);
+          if (fresh && fresh.status === 200) {
+            const cache = await caches.open(CACHE_NAME);
+            cache.put(e.request, fresh.clone());
+          }
+          return fresh;
+        } catch (_) {
+          const cached = await caches.match(e.request, { ignoreSearch: true });
+          if (cached) return cached;
+          throw _;
+        }
+      })()
     );
     return;
   }

@@ -865,6 +865,15 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
   line-height: 1.4;
 }
 
+/* Stops that reference a real Milan place not (yet) in the pepite database —
+   tapping them opens a Maps search instead of an in-app detail panel. */
+.stop-external-icon {
+  color: var(--text-muted);
+  vertical-align: middle;
+  margin-left: 3px;
+}
+.itinerario-stop--external:hover .stop-external-icon { color: var(--text); }
+
 .itinerario-tag {
   display: inline-block;
   font-size: 0.62rem;
