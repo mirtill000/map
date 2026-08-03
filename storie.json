@@ -1,0 +1,446 @@
+[{
+        "id": "giorno1",
+        "emoji": "",
+        "title": {
+            "it": "Primo Giorno",
+            "en": "Day One"
+        },
+        "sub": {
+            "it": "Milano Design Week",
+            "en": "Milano Design Week"
+        },
+        "tags": {
+            "pepite": [],
+            "eventi": []
+        },
+        "slides": [{
+                "type": "cover",
+                "pepita": "Milano Design Week - Giorno 1",
+                "pics": "https://ilariavita.com/map/img/storie/alcova3.webp"
+            }, {
+                "type": "text",
+                "ora": "11:30",
+                "pepita": "",
+                "evento": "Alcova Milano - Baggio Military Hospital",
+                "pics": "https://ilariavita.com/map/img/storie/alcova1.webp",
+                "title": {
+                    "it": "Alcova (Ospedale Militare Baggio)",
+                    "en": "Alcova (Baggio Military Hospital)"
+                },
+                "body": {
+                    "it": "Il dualismo tra ricordo e speranza, tra i vecchi corridoi dell'ospedale e le installazioni e le opere di designer da tutto il mondo. Per me un'emozione grande.",
+                    "en": "The duality between memory and hope, between the old hospital corridors and the installations and works of designers from all over the world. For me, a great feeling."
+                }
+            }, {
+                "type": "text",
+                "ora": "11:30",
+                "pepita": "",
+                "evento": "Alcova Milano - Baggio Military Hospital",
+                "pics": "https://ilariavita.com/map/img/storie/alcova2.webp",
+                "title": {
+                    "it": "Alcova (Ospedale Militare Baggio)",
+                    "en": "Alcova (Baggio Military Hospital)"
+                },
+                "body": {
+                    "it": "Il dualismo tra ricordo e speranza, tra i vecchi corridoi dell'ospedale e le installazioni e le opere di designer da tutto il mondo. Per me un'emozione grande.",
+                    "en": "The duality between memory and hope, between the old hospital corridors and the installations and works of designers from all over the world. For me, a great feeling."
+                }
+            }, {
+                "type": "text",
+                "ora": "11:30",
+                "pepita": "",
+                "evento": "Alcova Milano - Baggio Military Hospital",
+                "pics": "https://ilariavita.com/map/img/storie/alcova3.webp",
+                "title": {
+                    "it": "Alcova (Ospedale Militare Baggio)",
+                    "en": "Alcova (Baggio Military Hospital)"
+                },
+                "body": {
+                    "it": "Il dualismo tra ricordo e speranza, tra i vecchi corridoi dell'ospedale e le installazioni e le opere di designer da tutto il mondo. Per me un'emozione grande.",
+                    "en": "The duality between memory and hope, between the old hospital corridors and the installations and works of designers from all over the world. For me, a great feeling."
+                }
+            },
+            {
+                "type": "text",
+                "ora": "14:00",
+                "pepita": "",
+                "evento": "Animale Sociale - Nessuno mi può giudicare",
+                "pics": "https://ilariavita.com/map/img/storie/ornella1.webp",
+                "title": {
+                    "it": "Casa Ornella",
+                    "en": "Casa Ornella"
+                },
+                "body": {
+                    "it": "La quarta installazione dedicata alla design week pensata dalla designer Maria Vittoria Paggini. Si chiama 'Animale Sociale' e pensa ad una casa da condividere, vivere, sperimentare. Come sempre, bellissima in ogni particolare.",
+                    "en": "The fourth installation dedicated to design week, created by designer Maria Vittoria Paggini. It's called 'Social Animal' and envisions a home to share, live in, and experiment with. As always, beautiful in every detail."
+                }
+            }, {
+                "type": "text",
+                "ora": "14:00",
+                "pepita": "",
+                "evento": "Animale Sociale - Nessuno mi può giudicare",
+                "pics": "https://ilariavita.com/map/img/storie/ornella2.webp",
+                "title": {
+                    "it": "Casa Ornella",
+                    "en": "Casa Ornella"
+                },
+                "body": {
+                    "it": "La quarta installazione dedicata alla design week pensata dalla designer Maria Vittoria Paggini. Si chiama 'Animale Sociale' e pensa ad una casa da condividere, vivere, sperimentare. Come sempre, bellissima in ogni particolare.",
+                    "en": "The fourth installation dedicated to design week, created by designer Maria Vittoria Paggini. It's called 'Social Animal' and envisions a home to share, live in, and experiment with. As always, beautiful in every detail."
+                }
+            }, {
+                "type": "text",
+                "ora": "14:00",
+                "pepita": "",
+                "evento": "Animale Sociale - Nessuno mi può giudicare",
+                "pics": "https://ilariavita.com/map/img/storie/ornella3.webp",
+                "title": {
+                    "it": "Casa Ornella",
+                    "en": "Casa Ornella"
+                },
+                "body": {
+                    "it": "La quarta installazione dedicata alla design week pensata dalla designer Maria Vittoria Paggini. Si chiama 'Animale Sociale' e pensa ad una casa da condividere, vivere, sperimentare. Come sempre, bellissima in ogni particolare.",
+                    "en": "The fourth installation dedicated to design week, created by designer Maria Vittoria Paggini. It's called 'Social Animal' and envisions a home to share, live in, and experiment with. As always, beautiful in every detail."
+                }
+            }, {
+                "type": "text",
+                "ora": "16:00",
+                "pepita": "",
+                "evento": "Marni x Cucchi",
+                "pics": "https://ilariavita.com/map/img/storie/marni.webp",
+                "title": {
+                    "it": "Marni x Cucchi",
+                    "en": "Marni x Cucchi"
+                },
+                "body": {
+                    "it": "I colori e i pattern di Marni vestono la storica pasticceria Cucchi: dalle bustine di zucchero alle confezioni dei dolci, dai tovaglioli alle divise dello staff.",
+                    "en": "The colors and patterns of Marni dress up the historic Cucchi pastry shop: from sugar packets to sweet packaging, from napkins to staff uniforms."
+                }
+            },
+            {
+                "type": "text",
+                "ora": "17:30",
+                "pepita": "",
+				"evento": "Nilufar La casa magica",
+                "pics": "https://ilariavita.com/map/img/storie/nilufar1.webp",
+                "title": {
+                    "it": "Nilufar – La casa magica",
+                    "en": "Nilufar – La casa magica"
+                },
+                "body": {
+                    "it": "La casa diventa un luogo per allontanare gli spiriti negativi e esercitare un po' di magia attraverso oggetti, profumi, forme e colori. Molto bella.",
+                    "en": "The house becomes a place to ward off negative spirits and practice a bit of magic through objects, scents, shapes, and colors. Very nice."
+                }
+            }, {
+                "type": "text",
+                "ora": "17:30",
+                "pepita": "",
+				"evento": "Nilufar La casa magica",
+                "pics": "https://ilariavita.com/map/img/storie/nilufar2.webp",
+                "title": {
+                    "it": "Nilufar La casa magica",
+                    "en": "Nilufar La casa magica"
+                },
+                "body": {
+                    "it": "La casa diventa un luogo per allontanare gli spiriti negativi e esercitare un po' di magia attraverso oggetti, profumi, forme e colori. Molto bella.",
+                    "en": "The house becomes a place to ward off negative spirits and practice a bit of magic through objects, scents, shapes, and colors. Very nice."
+                }
+            }, {
+                "type": "text",
+                "ora": "18:30",
+                "pepita": "",
+                "pics": "https://ilariavita.com/map/img/storie/marimekko1.webp",
+                "title": {
+                    "it": "Osteria dei Fiori – Marimekko",
+                    "en": "Osteria dei Fiori – Marimekko"
+                },
+                "body": {
+                    "it": "L'osteria Grand Hotel sui Navigli diventa teatro perfetto per un aperitivo sotto ai glicini e tra le fantasie floreali del celebre brand finlandese.",
+                    "en": "The Grand Hotel tavern on the Navigli becomes the perfect spot for an aperitif under the wisteria and among the floral patterns of the famous Finnish brand."
+                }
+            }
+        ]
+    },
+	{
+        "id": "giorno2",
+        "emoji": "",
+        "title": {
+            "it": "Secondo Giorno",
+            "en": "Day Two"
+        },
+        "sub": {
+            "it": "Milano Design Week",
+            "en": "Milano Design Week"
+        },
+        "tags": {
+            "pepite": [],
+            "eventi": []
+        },
+        "slides": [{
+                "type": "cover",
+                "pepita": "Milano Design Week - Giorno 2",
+                "pics": "https://ilariavita.com/map/img/storie/rana2.webp"
+            }, {
+                "type": "text",
+                "ora": "11:30",
+                "pepita": "",
+                "evento": "Temporary Bistrot & Restaurant Famiglia Rana",
+                "pics": "https://ilariavita.com/map/img/storie/rana1.webp",
+                "title": {
+                    "it": "Temporary Bistrot & Restaurant Famiglia Rana",
+                    "en": "Temporary Bistrot & Restaurant Famiglia Rana"
+                },
+                "body": {
+                    "it": "Ottava edizione del connubio moda–food: installazione di Antonio Marras ispirata a un picnic sardo e temporary bistrot Famiglia Rana guidato dallo chef due stelle Francesco Sodano. Chiusura domenica 26 con brunch e dj set.",
+                    "en": "Eighth edition of the fashion–food collaboration: installation by Antonio Marras inspired by a Sardinian picnic and temporary bistrot Famiglia Rana led by two-star chef Francesco Sodano. Closing on Sunday the 26th with brunch and a DJ set."
+                }
+            }, {
+                "type": "text",
+                "ora": "11:30",
+                "pepita": "",
+                "evento": "Temporary Bistrot & Restaurant Famiglia Rana",
+                "pics": "https://ilariavita.com/map/img/storie/rana2.webp",
+                "title": {
+                    "it": "Temporary Bistrot & Restaurant Famiglia Rana",
+                    "en": "Temporary Bistrot & Restaurant Famiglia Rana"
+                },
+                "body": {
+                    "it": "Ottava edizione del connubio moda–food: installazione di Antonio Marras ispirata a un picnic sardo e temporary bistrot Famiglia Rana guidato dallo chef due stelle Francesco Sodano. Chiusura domenica 26 con brunch e dj set.",
+                    "en": "Eighth edition of the fashion–food collaboration: installation by Antonio Marras inspired by a Sardinian picnic and temporary bistrot Famiglia Rana led by two-star chef Francesco Sodano. Closing on Sunday the 26th with brunch and a DJ set."
+                }
+            }, {
+                "type": "text",
+                "ora": "11:30",
+                "pepita": "",
+                "evento": "Temporary Bistrot & Restaurant Famiglia Rana",
+                "pics": "https://ilariavita.com/map/img/storie/rana3.webp",
+                "title": {
+                    "it": "Temporary Bistrot & Restaurant Famiglia Rana",
+                    "en": "Temporary Bistrot & Restaurant Famiglia Rana"
+                },
+                "body": {
+                    "it": "Ottava edizione del connubio moda–food: installazione di Antonio Marras ispirata a un picnic sardo e temporary bistrot Famiglia Rana guidato dallo chef due stelle Francesco Sodano. Chiusura domenica 26 con brunch e dj set.",
+                    "en": "Eighth edition of the fashion–food collaboration: installation by Antonio Marras inspired by a Sardinian picnic and temporary bistrot Famiglia Rana led by two-star chef Francesco Sodano. Closing on Sunday the 26th with brunch and a DJ set."
+                }
+            }, {
+                "type": "text",
+                "ora": "11:30",
+                "pepita": "",
+                "evento": "Temporary Bistrot & Restaurant Famiglia Rana",
+                "pics": "https://ilariavita.com/map/img/storie/rana4.webp",
+                "title": {
+                    "it": "Temporary Bistrot & Restaurant Famiglia Rana",
+                    "en": "Temporary Bistrot & Restaurant Famiglia Rana"
+                },
+                "body": {
+                    "it": "Ottava edizione del connubio moda–food: installazione di Antonio Marras ispirata a un picnic sardo e temporary bistrot Famiglia Rana guidato dallo chef due stelle Francesco Sodano. Chiusura domenica 26 con brunch e dj set.",
+                    "en": "Eighth edition of the fashion–food collaboration: installation by Antonio Marras inspired by a Sardinian picnic and temporary bistrot Famiglia Rana led by two-star chef Francesco Sodano. Closing on Sunday the 26th with brunch and a DJ set."
+                }
+            }, {
+                "type": "text",
+                "ora": "13:30",
+                "pepita": "",
+                "evento": "Buccellati - Aquae Mirabilis",
+                "pics": "https://ilariavita.com/map/img/storie/buccellati1.webp",
+                "title": {
+                    "it": "Buccellati - Aquae Mirabilis",
+                    "en": "Buccellati - Aquae Mirabilis"
+                },
+                "body": {
+                    "it": "Un'installazione suggestiva in stile Buccellati: nelle profondità del mare, tra pesci e meduse, si celebra la storia e le forme dell'iconica collezione in argento del brand, Caviar.",
+                    "en": "A captivating Buccellati-style installation: in the depths of the sea, among fish and jellyfish, the history and shapes of the brand's iconic silver collection, Caviar, are celebrated."
+                }
+            }, {
+                "type": "text",
+                "ora": "13:30",
+                "pepita": "",
+                "evento": "Buccellati - Aquae Mirabilis",
+                "pics": "https://ilariavita.com/map/img/storie/buccellati2.webp",
+                "title": {
+                    "it": "Buccellati - Aquae Mirabilis",
+                    "en": "Buccellati - Aquae Mirabilis"
+                },
+                "body": {
+                    "it": "Un'installazione suggestiva in stile Buccellati: nelle profondità del mare, tra pesci e meduse, si celebra la storia e le forme dell'iconica collezione in argento del brand, Caviar.",
+                    "en": "A captivating Buccellati-style installation: in the depths of the sea, among fish and jellyfish, the history and shapes of the brand's iconic silver collection, Caviar, are celebrated."
+                }
+            }, {
+                "type": "text",
+                "ora": "15:30",
+                "pepita": "",
+                "evento": "",
+                "pics": "https://ilariavita.com/map/img/storie/arket1.webp",
+                "title": {
+                    "it": "La giostra di Arket",
+                    "en": "La giostra di Arket"
+                },
+                "body": {
+                    "it": "Fatta di frutta e verdura, la giostra ‘magica' pensata da Laila Gohar per Arket in via Palestro 8 è un inno alla gioia e al tornare bambini. Intorno, panchine, la possibilità di prendere un respiro e bere una limonata dell'Arket Cafè.",
+                    "en": "Made of fruit and vegetables, the 'magic' carousel designed by Laila Gohar for Arket on via Palestro 8 is a celebration of joy and of feeling like a child again. Around it, there are benches, a chance to take a breath, and a drink of lemonade from the Arket Café."
+                }
+            }, {
+                "type": "text",
+                "ora": "15:30",
+                "pepita": "",
+                "evento": "",
+                "pics": "https://ilariavita.com/map/img/storie/arket2.webp",
+                "title": {
+                    "it": "La giostra di Arket",
+                    "en": "La giostra di Arket"
+                },
+                "body": {
+                    "it": "Fatta di frutta e verdura, la giostra ‘magica' pensata da Laila Gohar per Arket in via Palestro 8 è un inno alla gioia e al tornare bambini. Intorno, panchine, la possibilità di prendere un respiro e bere una limonata dell'Arket Cafè.",
+                    "en": "Made of fruit and vegetables, the 'magic' carousel designed by Laila Gohar for Arket on via Palestro 8 is a celebration of joy and of feeling like a child again. Around it, there are benches, a chance to take a breath, and a drink of lemonade from the Arket Café."
+                }
+            }, {
+                "type": "text",
+                "ora": "15:30",
+                "pepita": "",
+                "evento": "",
+                "pics": "https://ilariavita.com/map/img/storie/arket3.webp",
+                "title": {
+                    "it": "La giostra di Arket",
+                    "en": "La giostra di Arket"
+                },
+                "body": {
+                    "it": "Fatta di frutta e verdura, la giostra ‘magica' pensata da Laila Gohar per Arket in via Palestro 8 è un inno alla gioia e al tornare bambini. Intorno, panchine, la possibilità di prendere un respiro e bere una limonata dell'Arket Cafè.",
+                    "en": "Made of fruit and vegetables, the 'magic' carousel designed by Laila Gohar for Arket on via Palestro 8 is a celebration of joy and of feeling like a child again. Around it, there are benches, a chance to take a breath, and a drink of lemonade from the Arket Café."
+                }
+            }, {
+                "type": "text",
+                "ora": "17:00",
+                "pepita": "",
+                "evento": "Kave Home - Room Stories",
+                "pics": "https://ilariavita.com/map/img/storie/kave.webp",
+                "title": {
+                    "it": "Kave Home - Room Stories",
+                    "en": "Kave Home - Room Stories"
+                },
+                "body": {
+                    "it": "Sara Ricciardi Studio celebra un'icona del brand Kave: la poltrona Jan realizzata in questo caso in 45 pezzi numerati, realizzati anche con un materiale vegetale realizzato dalle bucce di cachi. Sara Ricciardi spiega in un percorso di 5 tappe questa trasformazione.",
+                    "en": "Sara Ricciardi Studio celebrates an icon of the Kave brand: the Jan armchair, made in this case in 45 numbered pieces, also made with a plant-based material created from persimmon peels. Sara Ricciardi explains this transformation in a 5-step journey."
+                }
+            }
+        ]
+    },
+	{
+        "id": "giorno3",
+        "emoji": "",
+        "title": {
+            "it": "Terzo Giorno",
+            "en": "Day Three"
+        },
+        "sub": {
+            "it": "Milano Design Week",
+            "en": "Milano Design Week"
+        },
+        "tags": {
+            "pepite": [],
+            "eventi": []
+        },
+        "slides": [{
+                "type": "cover",
+                "pepita": "Milano Design Week - Giorno 3",
+                "pics": "https://ilariavita.com/map/img/storie/anima1.webp"
+            }, {
+                "type": "text",
+                "ora": "11:30",
+                "pepita": "",
+                "evento": "Anima Mundi. A Visionary Impulse",
+                "pics": "https://ilariavita.com/map/img/storie/anima1.webp",
+                "title": {
+                    "it": "Anima Mundi. A Visionary Impulse",
+                    "en": "Anima Mundi. A Visionary Impulse"
+                },
+                "body": {
+                    "it": "Un'installazione immersiva di immagini e suoni ispirata al principio della natura come forza in grado di rigenerare.",
+                    "en": "An immersive installation of images and sounds inspired by the idea of nature as a force capable of regenerating."
+                }
+            }, {
+                "type": "text",
+                "ora": "11:30",
+                "pepita": "",
+                "evento": "Anima Mundi. A Visionary Impulse",
+                "pics": "https://ilariavita.com/map/img/storie/anima2.webp",
+                "title": {
+                    "it": "Anima Mundi. A Visionary Impulse",
+                    "en": "Anima Mundi. A Visionary Impulse"
+                },
+                "body": {
+                    "it": "Un'installazione immersiva di immagini e suoni ispirata al principio della natura come forza in grado di rigenerare.",
+                    "en": "An immersive installation of images and sounds inspired by the idea of nature as a force capable of regenerating."
+                }
+            }, {
+                "type": "text",
+                "ora": "13:30",
+                "pepita": "",
+                "evento": "When Apricots Blossom",
+                "pics": "https://ilariavita.com/map/img/storie/citterio1.webp",
+                "title": {
+                    "it": "When Apricots Blossom – Palazzo Citterio",
+                    "en": "When Apricots Blossom – Palazzo Citterio"
+                },
+                "body": {
+                    "it": "Una mostra che racconta, tra design e installazioni, la resilienza culturale delle comunità del Mar d'Aral e del Karakalpakstan. Un viaggio tra memoria e rinascita, ispirato alla poesia e alla trasformazione di un territorio fragile ma vitale.",
+                    "en": "An exhibition that tells, through design and installations, the cultural resilience of the communities of the Aral Sea and Karakalpakstan. A journey through memory and rebirth, inspired by the poetry and transformation of a fragile but vibrant land."
+                }
+            }, {
+                "type": "text",
+                "ora": "13:30",
+                "pepita": "",
+                "evento": "When Apricots Blossom",
+                "pics": "https://ilariavita.com/map/img/storie/citterio2.webp",
+                "title": {
+                    "it": "When Apricots Blossom – Palazzo Citterio",
+                    "en": "When Apricots Blossom – Palazzo Citterio"
+                },
+                "body": {
+                    "it": "Una mostra che racconta, tra design e installazioni, la resilienza culturale delle comunità del Mar d'Aral e del Karakalpakstan. Un viaggio tra memoria e rinascita, ispirato alla poesia e alla trasformazione di un territorio fragile ma vitale.",
+                    "en": "An exhibition that tells, through design and installations, the cultural resilience of the communities of the Aral Sea and Karakalpakstan. A journey through memory and rebirth, inspired by the poetry and transformation of a fragile but vibrant land."
+                }
+            }, {
+                "type": "text",
+                "ora": "15:30",
+                "pepita": "",
+                "evento": "BECOMING",
+                "pics": "https://ilariavita.com/map/img/storie/becoming1.webp",
+                "title": {
+                    "it": "Becoming – Palazzo Isimbardi – Rimadesio",
+                    "en": "Becoming – Palazzo Isimbardi – Rimadesio"
+                },
+                "body": {
+                    "it": "Nel chiostro di Palazzo Isimbardi, l’installazione Aedes Memoriae di Encor Studio esplora luce e trasparenza attraverso il vetro. Un’opera che riflette su spazio e tempo, trasformando il vetro in una materia viva e in continua evoluzione.",
+                    "en": "In the courtyard of Palazzo Isimbardi, the Aedes Memoriae installation by Encor Studio explores light and transparency through glass. A work that reflects on space and time, turning glass into a living and ever-evolving material."
+                }
+            }, {
+                "type": "text",
+                "ora": "17:30",
+                "pepita": "",
+                "evento": "",
+                "pics": "https://ilariavita.com/map/img/storie/provasi1.webp",
+                "title": {
+                    "it": "Casa Provasi",
+                    "en": "Casa Provasi"
+                },
+                "body": {
+                    "it": "Un allestimento che celebra la casa come luogo che custodisce frammenti di vita, non un insieme di mobili, ma una stratificazione di ricordi e momenti.",
+                    "en": "A setup that celebrates the home as a place that holds fragments of life, not just a bunch of furniture, but a layering of memories and moments."
+                }
+            }, {
+                "type": "text",
+                "ora": "17:00",
+                "pepita": "",
+                "evento": "",
+                "pics": "https://ilariavita.com/map/img/storie/provasi2.webp",
+                "title": {
+                    "it": "Casa Provasi",
+                    "en": "Casa Provasi"
+                },
+                "body": {
+                    "it": "Un allestimento che celebra la casa come luogo che custodisce frammenti di vita, non un insieme di mobili, ma una stratificazione di ricordi e momenti.",
+                    "en": "A setup that celebrates the home as a place that holds fragments of life, not just a bunch of furniture, but a layering of memories and moments."
+                }
+            }
+        ]
+    }
+]
