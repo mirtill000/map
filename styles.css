@@ -30,6 +30,7 @@
   --font-serif: 'DM Serif Display', Georgia, 'Times New Roman', serif;
   --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --transition: 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
+  --tabbar-h: 0px; /* measured/set by JS on mobile so the sheet stops short of the fixed bottom tab bar */
 }
 
 /* ── Splash Screen ── */
@@ -580,34 +581,48 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
 
 
 /* ════════════════════════════════════════
-   SIDEBAR TABS
+   NATIVE TAB BAR — vertical icon rail on desktop, fixed bottom bar on mobile
+   (see the @media (max-width: 768px) override further down for the mobile shape)
    ════════════════════════════════════════ */
-.sidebar-tabs {
+.app-tabbar {
   display: flex;
-  padding: 0;
-  gap: 0;
-  border-bottom: 1px solid var(--border);
+  flex-direction: column;
+  align-items: stretch;
+  width: 72px;
   flex-shrink: 0;
+  gap: 2px;
+  padding: 14px 0;
+  background: var(--bg-card);
+  border-right: 1px solid var(--border);
+  z-index: 1000;
 }
 
 .sidebar-tab {
-  flex: 1;
-  padding: 12px 4px;
-  font-size: 0.68rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: 0 8px;
+  padding: 9px 2px;
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
   font-weight: 500;
   color: var(--text-muted);
-  border-bottom: 2px solid transparent;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
   transition: all var(--transition);
-  text-align: center;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
+  cursor: pointer;
 }
+.sidebar-tab .tab-ic { font-size: 1.2rem; line-height: 1; }
 
-.sidebar-tab:hover { color: var(--text-light); }
+.sidebar-tab:hover { color: var(--text-light); background: var(--gray-light); }
 .sidebar-tab.active {
   color: var(--text);
-  font-weight: 600;
-  border-bottom-color: var(--text);
+  font-weight: 700;
+  background: var(--gray-light);
 }
 
 /* Tab Content */
@@ -2441,15 +2456,6 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
    STORIE DI MILANO
    ════════════════════════════════════════ */
 
-/* Sidebar tabs: allow horizontal scroll for 5 tabs */
-.sidebar-tabs {
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-.sidebar-tabs::-webkit-scrollbar { display: none; }
-
 .storie-list {
   display: flex;
   flex-direction: column;
@@ -2916,7 +2922,7 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
     top: auto;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: var(--tabbar-h, 0px);
     width: auto;
     max-width: none;
     height: 55vh;
@@ -2931,6 +2937,24 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
   .sidebar.open { transform: none; }
 
   .sidebar-backdrop { display: none; }
+
+  /* Native tab bar becomes a fixed bottom bar, pinned below the sheet (which stops
+     var(--tabbar-h) short of the viewport edge — see snapSheetTo()/_tabBarHeightPx()
+     in app.js) so the tabs stay tappable no matter how tall the sheet is dragged. */
+  .app-tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    flex-direction: row;
+    align-items: stretch;
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
+    border-right: none;
+    border-top: 1px solid var(--border);
+    z-index: 1200;
+  }
+  .app-tabbar .sidebar-tab { flex: 1; margin: 0 2px; }
 
   .sheet-handle-mobile {
     display: flex;
@@ -2990,6 +3014,7 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
     transform: translateY(100%);
     border-radius: 20px 20px 0 0;
     box-shadow: 0 -4px 32px rgba(0,0,0,0.14);
+    z-index: 1300; /* above the fixed tab bar (1200) so an open detail fully covers it */
   }
   .detail-panel.active {
     transform: translateY(0);
