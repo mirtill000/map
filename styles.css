@@ -3140,7 +3140,8 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
   cursor: pointer;
   transition: background var(--transition);
 }
-.gs-result:hover { background: var(--bg); }
+.gs-result:hover, .gs-result:focus-visible { background: var(--bg); }
+.gs-result:focus-visible { outline: 2px solid var(--text); outline-offset: -2px; }
 .gs-result-emoji { font-size: 1.1rem; flex-shrink: 0; }
 .gs-result-info { display: flex; flex-direction: column; min-width: 0; }
 .gs-result-name {
@@ -3409,4 +3410,55 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
   transition: opacity var(--transition);
 }
 .onboarding-btn-next:hover { opacity: 0.85; }
+
+/* ── Eventi tab: "Vicino a me" indicator (set from Pepite tab, applies here too) ── */
+.eventi-nearme-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 16px 10px;
+  padding: 7px 12px;
+  background: var(--text);
+  color: var(--bg-card);
+  border-radius: 2px;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.eventi-nearme-badge button {
+  background: none;
+  border: none;
+  color: var(--bg-card);
+  opacity: 0.7;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.eventi-nearme-badge button:hover { opacity: 1; }
+
+/* ── "La mia giornata" hint (shown on the Preferiti view of Pepite/Eventi) ── */
+.myday-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: calc(100% - 32px);
+  margin: 0 16px 10px;
+  padding: 10px 12px;
+  background: var(--gray-light);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+}
+.myday-hint:hover { background: var(--border); border-color: var(--text); }
+.myday-hint-icon { font-size: 1rem; flex-shrink: 0; }
 
