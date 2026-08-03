@@ -1232,6 +1232,30 @@ function initMap() {
   }).addTo(map);
 
   renderMarkers();
+  setupMapResizeHandling();
+}
+
+/**
+ * Leaflet measures its container once at construction time and never re-checks on its own.
+ * If the real size of #map changes afterward — window/split-view resize, orientation change,
+ * a mobile browser's toolbar collapsing, web fonts swapping in — the tile grid stays stuck at
+ * the old size, leaving the map rendered narrow with blank space next to it. Keep it in sync.
+ */
+function setupMapResizeHandling() {
+  let resizeTimer = null;
+  const scheduleInvalidate = (delay = 150) => {
+    if (!map) return;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => map.invalidateSize(), delay);
+  };
+
+  window.addEventListener('resize', () => scheduleInvalidate());
+  window.visualViewport?.addEventListener('resize', () => scheduleInvalidate());
+
+  // Safety net for the first load: catch any layout settling that happens after
+  // construction (splash screen removal, web font swap-in, iOS toolbar settling).
+  document.fonts?.ready?.then(() => scheduleInvalidate(50));
+  setTimeout(() => scheduleInvalidate(0), 1600); // just after the splash finishes hiding
 }
 
 function renderMarkers() {
