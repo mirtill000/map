@@ -4674,17 +4674,21 @@ function _computeOpenNow(p, now) {
   const dayIT = { lun:1, mar:2, mer:3, gio:4, ven:5, sab:6, dom:7 };
 
   function parseDays(str) {
-    const parts = str.trim().toLowerCase().split('-');
-    const start = dayIT[parts[0]];
-    if (!start) return [];
-    const end = parts.length > 1 ? (dayIT[parts[1]] ?? start) : start;
+    // A comma-joined list of day tokens (e.g. "Ven,Sab" or "Mer,Gio-Dom"), each either
+    // a single day or a hyphen range — union of all of them.
     const days = [];
-    if (start <= end) {
-      for (let d = start; d <= end; d++) days.push(d);
-    } else {
-      // wraps around: e.g. Ven(5)→Lun(1) = Fri Sat Sun Mon
-      for (let d = start; d <= 7; d++) days.push(d);
-      for (let d = 1; d <= end; d++) days.push(d);
+    for (const token of str.trim().toLowerCase().split(',')) {
+      const parts = token.split('-');
+      const start = dayIT[parts[0]];
+      if (!start) continue;
+      const end = parts.length > 1 ? (dayIT[parts[1]] ?? start) : start;
+      if (start <= end) {
+        for (let d = start; d <= end; d++) days.push(d);
+      } else {
+        // wraps around: e.g. Ven(5)→Lun(1) = Fri Sat Sun Mon
+        for (let d = start; d <= 7; d++) days.push(d);
+        for (let d = 1; d <= end; d++) days.push(d);
+      }
     }
     return days;
   }
@@ -4700,7 +4704,9 @@ function _computeOpenNow(p, now) {
     return currentMins >= open && currentMins < close;
   }
 
-  const segments = orari.split(',').map(s => s.trim()).filter(Boolean);
+  // Split only on ", " (comma + space): a bare comma with no following space joins a
+  // day list that shares one time range (e.g. "Mer,Gio 18:30–23:30") and must stay together.
+  const segments = orari.split(/,\s+/).map(s => s.trim()).filter(Boolean);
   let lastDays = null;
 
   for (const seg of segments) {
@@ -4711,10 +4717,12 @@ function _computeOpenNow(p, now) {
       continue;
     }
 
-    // "Mer-Dom 12:30-14:30"  or  "Lun 09:00-18:00"
-    const full  = seg.match(/^([A-Za-z-]+)\s+(\d{1,2}:\d{2})-(\d{1,2}:\d{2})$/);
-    // "19:30-22:30"  (inherits last day range)
-    const tOnly = seg.match(/^(\d{1,2}:\d{2})-(\d{1,2}:\d{2})$/);
+    // "Mer-Dom 12:30–14:30", "Lun 09:00-18:00" or "Ven,Sab 18:30–01:00" — data uses an en
+    // dash (–) between times (a plain hyphen also appears in a few entries, so accept both)
+    // and commas without a space to list non-contiguous days sharing one time range.
+    const full  = seg.match(/^([A-Za-z,-]+)\s+(\d{1,2}:\d{2})[-–](\d{1,2}:\d{2})$/);
+    // "19:30–22:30"  (inherits last day range)
+    const tOnly = seg.match(/^(\d{1,2}:\d{2})[-–](\d{1,2}:\d{2})$/);
 
     if (full) {
       lastDays = parseDays(full[1]);

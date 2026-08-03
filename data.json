@@ -1869,23 +1869,6 @@
         "fonti": "[\"https://www.cuccagna.org/\", \"https://www.instagram.com/cascinacuccagna/\"]",
         "salvato": false
     }, {
-        "id": 114,
-        "nome": "Cascina Nascosta",
-        "categoria": "Oasi Segrete",
-        "categoria_en": "Secret Oases",
-        "quartiere": "Sempione",
-        "descrizione": "Protetto dalle fronde del parco, un angolo agreste insospettabile. Il fruscio delle foglie e i ritmi lenti svelano un silenzio prezioso e raro.",
-        "descrizione_en": "Protected by the park's foliage, an unsuspected rustic corner. The rustling leaves and slow rhythms reveal a precious and rare silence.",
-        "indirizzo": "Viale Emilio Alemagna, 14, 20121 Milano MI, Italia",
-        "orari": "Chiuso Lun, Mar-Ven 12:30–23:30, Sab 09:00–23:30, Dom 09:00–22:00",
-        "prezzo": "3",
-        "lat": 45.4737073,
-        "lng": 9.1725557,
-        "immagine": "https://www.ilariavita.com/map/img/Cascina_Nascosta.webp",
-        "credit_immagine": "© Cascina Nascosta",
-        "fonti": "[\"https://cascinanascosta.it/\", \"https://www.instagram.com/cascinanascosta/\"]",
-        "salvato": false
-    }, {
         "id": 115,
         "nome": "Combo Milano",
         "categoria": "Oasi Segrete",
@@ -1918,23 +1901,6 @@
         "immagine": "https://www.ilariavita.com/map/img/Spirit_de_Milan.webp",
         "credit_immagine": "© Spirit de Milan",
         "fonti": "[\"https://spiritdemilan.it/\", \"https://www.instagram.com/spiritdemilan/\"]",
-        "salvato": false
-    }, {
-        "id": 118,
-        "nome": "Surfer's Garden",
-        "categoria": "Oasi Segrete",
-        "categoria_en": "Secret Oases",
-        "quartiere": "Romolo",
-        "descrizione": "Nascosto in un circolo sportivo, un rifugio verde dove perdersi tra rose e surf. L'energia è distesa, perfetta per un respiro che sa d'estate.",
-        "descrizione_en": "Hidden in a sports club, a green refuge to get lost among roses and surfboards. The energy is relaxed, perfect for a breath that tastes of summer.",
-        "indirizzo": "Piazza Caduti del Lavoro, 5, 20141 Milano MI, Italia",
-        "orari": "Chiuso Lun, Mar 19:30–00:00, Mer,Gio 18:30–23:30, Ven,Sab 18:30–01:00, Dom 12:00–16:00, 18:00–22:00",
-        "prezzo": "3",
-        "lat": 45.443272,
-        "lng": 9.1859121,
-        "immagine": "https://www.ilariavita.com/map/img/Surfer's_Garden.webp",
-        "credit_immagine": "© Surfer's Garden",
-        "fonti": "[\"https://www.instagram.com/surfersgarden/\"]",
         "salvato": false
     }, {
         "id": 119,
@@ -2838,23 +2804,6 @@
         "fonti": "[\"https://www.instagram.com/labuttiga/\"]",
         "salvato": false
     }, {
-        "id": 193,
-        "nome": "Birrificio Lambrate",
-        "categoria": "Hamburger",
-        "categoria_en": "Burgers",
-        "quartiere": "Lambrate",
-        "descrizione": "Istituzione milanese dall'anima ruvida. Oltre alle pinte iconiche, i burger generosi sanno di serate infinite, chiacchiere ad alta voce e amicizia.",
-        "descrizione_en": "A Milanese institution with a rough soul. Beyond the iconic pints, the generous burgers taste of endless evenings, loud chats, and friendship.",
-        "indirizzo": "Via Adelchi, 5, 20131 Milano MI, Italia",
-        "orari": "Chiuso Lun, Mar-Dom 18:00–02:00",
-        "prezzo": "2",
-        "lat": 45.4856717,
-        "lng": 9.231587,
-        "immagine": "https://www.ilariavita.com/map/img/Birrificio_Lambrate.webp",
-        "credit_immagine": "© Birrificio Lambrate",
-        "fonti": "[\"https://www.instagram.com/birrificiolambrate/\"]",
-        "salvato": false
-    }, {
         "id": 194,
         "nome": "I Caminetti",
         "categoria": "Hamburger",
@@ -3387,8 +3336,8 @@
         "categoria": "Cena tra Amici",
         "categoria_en": "Dinner with Friends",
         "quartiere": "Corvetto",
-        "descrizione": "Legature a piombo e vetrate artistiche. Un laboratorio luminoso dove vetri policromi vengono assemblati in cattedrali in miniatura di pura luce.",
-        "descrizione_en": "Lead binding and artistic stained glass. A bright workshop where polychrome glass is assembled into miniature cathedrals of pure light.",
+        "descrizione": "Il forno a legna profuma la giornata dal pane del mattino alle pizze della sera. Tavoli lunghi e farciture generose per cene tra amici senza fronzoli.",
+        "descrizione_en": "The wood oven scents the day, from morning bread to evening pizzas. Long tables and generous toppings for unpretentious dinners among friends.",
         "indirizzo": "Via Guglielmo Pecori Giraldi, 6, 20139 Milano MI, Italia",
         "orari": "Lun-Sab 08:00–22:30, Chiuso Dom",
         "prezzo": "3",
