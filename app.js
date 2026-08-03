@@ -638,6 +638,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadPepiteData();
   // Pre-load eventi in background so the tab is instant when switched
   loadEventiData();
+  // On mobile, also preload storie in the background so the bottom sheet's editorial
+  // preview can show a Diario teaser without requiring the user to open that tab first
+  if (_isMobileSheet()) loadStorieData();
 
   handleDeepLink();
   window.addEventListener('hashchange', handleDeepLink);
@@ -779,6 +782,7 @@ async function loadPepiteData() {
   renderMarkers();
   renderItinerari();
   renderDailyCard();
+  renderMobileEditorialPreview();
   // If the Storie tab loaded before pepite, re-render now that cover images and tag lookups work
   if (storieLoaded) renderStorie();
   if ('serviceWorker' in navigator) {
@@ -860,6 +864,7 @@ function setupLangToggle() {
         updateCategoryCounts();
         renderPepiteList();
         renderItinerari();
+        renderMobileEditorialPreview();
       }
       if (eventiLoaded) {
         buildEventiDateFilters(); buildEventiFilters();
@@ -1318,27 +1323,108 @@ function renderMarkers() {
   map.addLayer(markerCluster);
 }
 
-// ── Sidebar Mobile Toggle ──
+// ── Sidebar Mobile Toggle / Bottom Sheet ──
+// On mobile the sidebar is a bottom sheet anchored to the map (not an off-canvas
+// panel): it has three drag/tap snap heights so the map is never fully hidden.
+// "peek" is a fixed pixel height; "editorial"/"list" are ratios of viewport height
+// so the sheet adapts to different phone sizes.
+const SHEET_SNAPS = { peek: 200, editorial: 0.55, list: 0.84 };
+let _sheetState = 'editorial';
+
+function _isMobileSheet() {
+  return window.innerWidth <= 768;
+}
+
+function _snapHeightPx(name) {
+  const v = SHEET_SNAPS[name];
+  return v <= 1 ? Math.round(window.innerHeight * v) : v;
+}
+
+/** Snap the mobile sheet to one of its three heights (no-op on desktop). */
+function snapSheetTo(name, animate = true) {
+  const sidebar = document.getElementById('sidebar');
+  if (!sidebar || !_isMobileSheet()) return;
+  _sheetState = name;
+  if (!animate) sidebar.classList.add('dragging'); // reused as a "no transition" flag
+  sidebar.style.height = _snapHeightPx(name) + 'px';
+  if (!animate) {
+    void sidebar.offsetHeight; // flush the height change before re-enabling transitions
+    sidebar.classList.remove('dragging');
+  }
+  // The visible map area changes with the sheet height — Leaflet needs telling.
+  if (map) setTimeout(() => map.invalidateSize(), 340);
+}
+
 function setupSidebar() {
   const sidebar = document.getElementById('sidebar');
   const backdrop = document.getElementById('sidebarBackdrop');
 
-  document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
-    sidebar.classList.add('open');
-    backdrop.classList.add('active');
-  });
-
+  document.getElementById('mobileMenuBtn')?.addEventListener('click', () => snapSheetTo('list'));
   document.getElementById('sidebarClose')?.addEventListener('click', closeSidebar);
   backdrop?.addEventListener('click', closeSidebar);
 
   // Mobile search button opens the cross-domain global search directly — it's a
   // superset of the per-tab search and needs no extra tap through the hamburger menu.
   document.getElementById('mobileSearchBtn')?.addEventListener('click', openGlobalSearch);
+
+  setupMobileSheetDrag(sidebar);
+}
+
+function setupMobileSheetDrag(sidebar) {
+  const handle = document.getElementById('sheetHandleMobile');
+  if (!sidebar || !handle) return;
+
+  let dragging = false, startY = 0, startH = 0;
+
+  handle.addEventListener('touchstart', (e) => {
+    if (!_isMobileSheet()) return;
+    dragging = true;
+    startY  = e.touches[0].clientY;
+    startH  = sidebar.getBoundingClientRect().height;
+    sidebar.classList.add('dragging');
+  }, { passive: true });
+
+  handle.addEventListener('touchmove', (e) => {
+    if (!dragging) return;
+    const dy  = startY - e.touches[0].clientY; // dragging up → positive → taller sheet
+    const min = _snapHeightPx('peek');
+    const max = _snapHeightPx('list');
+    sidebar.style.height = Math.min(max, Math.max(min, startH + dy)) + 'px';
+  }, { passive: true });
+
+  function endDrag() {
+    if (!dragging) return;
+    dragging = false;
+    sidebar.classList.remove('dragging');
+    const h = sidebar.getBoundingClientRect().height;
+    let best = 'peek', bestD = Infinity;
+    for (const name of Object.keys(SHEET_SNAPS)) {
+      const d = Math.abs(h - _snapHeightPx(name));
+      if (d < bestD) { bestD = d; best = name; }
+    }
+    snapSheetTo(best, true);
+  }
+  handle.addEventListener('touchend', endDrag, { passive: true });
+  handle.addEventListener('touchcancel', endDrag, { passive: true });
+
+  // Crossing the mobile/desktop breakpoint: drop the inline height on desktop so the
+  // normal in-flow sidebar CSS takes back over; re-snap if returning to mobile width.
+  window.addEventListener('resize', () => {
+    if (!_isMobileSheet()) {
+      sidebar.style.height = '';
+      sidebar.style.transition = '';
+    } else if (!sidebar.style.height) {
+      snapSheetTo(_sheetState, false);
+    }
+  });
+
+  if (_isMobileSheet()) snapSheetTo('editorial', false);
 }
 
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebarBackdrop').classList.remove('active');
+  snapSheetTo('peek');
 }
 
 // ── Event Map Markers ──
@@ -2975,6 +3061,11 @@ function setupMyDayPlan() {
     navigator.vibrate?.(20);
     openMyDay();
   });
+  // Always-visible CTA in the mobile sheet's editorial preview
+  document.getElementById('mobileMyDayHint')?.addEventListener('click', () => {
+    navigator.vibrate?.(20);
+    openMyDay();
+  });
 }
 
 // ── Eventi del Mese ──
@@ -3858,6 +3949,7 @@ async function loadStorieData() {
   }
   storieLoaded = true;
   renderStorie();
+  renderMobileEditorialPreview();
 }
 
 let currentStoria = null;
@@ -4949,6 +5041,46 @@ function getPairedPepita(daily) {
   if (diffCat.length > 0) return diffCat[(doy + 1) % diffCat.length];
 
   return null;
+}
+
+// ── Mobile bottom-sheet editorial preview (Pepite tab, mobile only) ──
+// Surfaces the same curated content as the desktop's floating daily card + Diario tab,
+// as the sheet's "editorial" resting state — see setupMobileSheetDrag.
+function renderMobileEditorialPreview() {
+  const dailyEl   = document.getElementById('medDaily');
+  const dailyText = document.getElementById('medDailyText');
+  if (dailyEl && dailyText && pepite.length > 0) {
+    const now   = new Date();
+    const doy   = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+    const daily = pepite[doy % pepite.length];
+    dailyText.innerHTML = `<b>${escapeHtml(t('dailyCardLabel'))}</b> — ${escapeHtml(daily.nome)}`;
+    dailyEl.style.display = 'flex';
+  }
+
+  const storiesEl    = document.getElementById('medStories');
+  const storiesRow   = document.getElementById('medStoriesRow');
+  const storiesLabel = document.getElementById('medStoriesLabel');
+  if (storiesEl && storiesRow) {
+    if (storieData.length > 0) {
+      if (storiesLabel) storiesLabel.textContent = t('storieTab');
+      storiesRow.innerHTML = storieData.slice(0, 4).map(s => {
+        const title = s.title?.[currentLang] || s.title?.it || '';
+        return `<div class="med-story" data-id="${escapeHtml(s.id)}"><span>${escapeHtml(s.emoji || '📖')} ${escapeHtml(title)}</span></div>`;
+      }).join('');
+      storiesRow.querySelectorAll('.med-story').forEach(el => {
+        el.addEventListener('click', () => {
+          const s = storieData.find(x => String(x.id) === el.dataset.id);
+          if (s) openStoria(s);
+        });
+      });
+      storiesEl.style.display = 'block';
+    } else {
+      storiesEl.style.display = 'none';
+    }
+  }
+
+  const myDayText = document.getElementById('mobileMyDayHintText');
+  if (myDayText) myDayText.textContent = t('myDayHint');
 }
 
 function renderDailyCard() {
