@@ -65,7 +65,6 @@ const _notifTimers  = new Map(); // eventId → setTimeout handle for tomorrow-n
 let   _imgObserver  = null;      // IntersectionObserver for pepite card images
 let   _markerTimer  = null;      // debounce handle for renderMarkers
 let   filterOpenNow = (() => { try { return localStorage.getItem('pepite_open_now') === 'true'; } catch { return false; } })();  // "Aperto ora" filter pill state
-let   currentPriceFilter = (() => { try { return localStorage.getItem('pepite_price_filter') || 'all'; } catch { return 'all'; } })(); // 'all' | '2' | '3' | '4' | '5'
 
 const categoryEmoji = {
   'Ristoranti Romantici': '🕯️',
@@ -87,8 +86,6 @@ const i18n = {
     appSubtitle: "Milano d'autore",
     searchPlaceholder: 'Nome, zona, categoria...',
     globalSearchPlaceholder: 'Cerca pepite, eventi, itinerari, storie...',
-    priceLabel: 'Fascia di Preziosità',
-    priceAll: 'Tutte',
     catLabel: 'Categorie',
     catAll: 'Tutte le Pepite',
     catRomantici: 'Romantici',
@@ -179,7 +176,7 @@ const i18n = {
     onbTitle1: 'Benvenuto in Pepite per Tutti',
     onbText1: 'La mappa delle gemme nascoste di Milano: locali, eventi, itinerari e storie scelti per te.',
     onbTitle2: 'Pepite',
-    onbText2: 'Scopri locali autentici, filtra per categoria, prezzo o quartiere, e salva i tuoi preferiti con il cuore ♥.',
+    onbText2: 'Scopri locali autentici, filtra per categoria o quartiere, e salva i tuoi preferiti con il cuore ♥.',
     onbTitle3: 'Itinerari & La mia giornata',
     onbText3: 'Segui uno dei nostri percorsi curati o crea il tuo itinerario personale a partire dai luoghi ed eventi che hai salvato.',
     onbTitle4: 'Eventi, Diario e ricerca ovunque',
@@ -287,8 +284,6 @@ const i18n = {
     appSubtitle: "Milan's hidden gems",
     searchPlaceholder: 'Name, area, category...',
     globalSearchPlaceholder: 'Search gems, events, itineraries, stories...',
-    priceLabel: 'Price Range',
-    priceAll: 'All',
     catLabel: 'Categories',
     catAll: 'All Gems',
     catRomantici: 'Romantic',
@@ -379,7 +374,7 @@ const i18n = {
     onbTitle1: 'Welcome to Pepite per Tutti',
     onbText1: "Milan's hidden-gem map: venues, events, itineraries and stories picked just for you.",
     onbTitle2: 'Gems',
-    onbText2: 'Discover authentic venues, filter by category, price or neighborhood, and save your favourites with the heart ♥.',
+    onbText2: 'Discover authentic venues, filter by category or neighborhood, and save your favourites with the heart ♥.',
     onbTitle3: 'Itineraries & My Day Plan',
     onbText3: 'Follow one of our curated routes, or build your own day plan from the places and events you saved.',
     onbTitle4: 'Events, Diary and search everywhere',
@@ -920,9 +915,6 @@ function applyLanguage() {
     const key = catTexts[item.dataset.cat];
     if (key) item.querySelector('.cat-text').textContent = t(key);
   });
-  // Price filter "all" label
-  const priceAllLabel = document.getElementById('priceAllLabel');
-  if (priceAllLabel) priceAllLabel.textContent = t('priceAll');
   // Mood Matcher discoverability hint
   const moodMatcherHintText = document.getElementById('moodMatcherHintText');
   if (moodMatcherHintText) moodMatcherHintText.textContent = t('moodMatcherHint');
@@ -1068,11 +1060,6 @@ function getFiltered() {
     list = list.filter(p => isOpenNow(p) === true);
   }
 
-  // Price filter
-  if (currentPriceFilter !== 'all') {
-    list = list.filter(p => String(p.prezzo) === currentPriceFilter);
-  }
-
   // Sort by distance when "Near me" is active
   if (nearMeActive && userLocation) {
     list.sort((a, b) => {
@@ -1163,12 +1150,9 @@ function renderPepiteList() {
     list.querySelector('.empty-reset-btn').addEventListener('click', () => {
       currentFilter = 'all';
       filterOpenNow = false;
-      currentPriceFilter = 'all';
       safeLocalStorageSet('pepite_filter', 'all');
       safeLocalStorageSet('pepite_open_now', false);
-      safeLocalStorageSet('pepite_price_filter', 'all');
       document.getElementById('openNowPill')?.classList.remove('active');
-      document.querySelectorAll('.price-pill').forEach(p => p.classList.toggle('active', p.dataset.price === 'all'));
       document.getElementById('searchInput').value = '';
       document.querySelectorAll('.cat-item').forEach(i => i.classList.toggle('active', i.dataset.cat === 'all'));
       renderPepiteList();
@@ -1861,23 +1845,6 @@ function setupFilters() {
         const bounds = L.latLngBounds(filtered.map(p => [p.lat, p.lng]));
         map.fitBounds(bounds.pad(0.15), { duration: 0.8 });
       }
-    });
-  });
-
-  // Price filter pills — restore persisted state
-  document.querySelectorAll('.price-pill').forEach(pill =>
-    pill.classList.toggle('active', pill.dataset.price === currentPriceFilter));
-
-  document.querySelectorAll('.price-pill').forEach(pill => {
-    pill.addEventListener('click', () => {
-      navigator.vibrate?.(30);
-      document.querySelectorAll('.price-pill').forEach(p => p.classList.remove('active'));
-      pill.classList.add('active');
-      currentPriceFilter = pill.dataset.price;
-      safeLocalStorageSet('pepite_price_filter', currentPriceFilter);
-      _lastMarkersKey = null; // force marker rebuild
-      renderPepiteList();
-      renderMarkers();
     });
   });
 }
