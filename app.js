@@ -894,10 +894,11 @@ function applyLanguage() {
   document.getElementById('searchInput').placeholder = t('searchPlaceholder');
   const gsInput = document.getElementById('globalSearchInput');
   if (gsInput) gsInput.placeholder = t('globalSearchPlaceholder');
-  // Tabs
+  // Tabs (set the label span, not the whole button — it also holds the .tab-ic icon)
   document.querySelectorAll('.sidebar-tab').forEach(tab => {
     const key = 'tab' + tab.dataset.tab.charAt(0).toUpperCase() + tab.dataset.tab.slice(1);
-    tab.textContent = t(key);
+    const label = tab.querySelector('.tab-label');
+    if (label) label.textContent = t(key);
   });
   // Category label
   const catLabel = document.querySelector('.sidebar-categories .section-label');
@@ -937,7 +938,7 @@ function applyLanguage() {
   if (pepiteMyDayHintText) pepiteMyDayHintText.textContent = t('myDayHint');
   const eventiMyDayHintText = document.getElementById('eventiMyDayHintText');
   if (eventiMyDayHintText) eventiMyDayHintText.textContent = t('myDayHint');
-  const tabBtnStorie = document.getElementById('tabBtnStorie');
+  const tabBtnStorie = document.getElementById('tabBtnStorie')?.querySelector('.tab-label');
   if (tabBtnStorie) tabBtnStorie.textContent = t('storieTab');
   const storieTabTitle = document.getElementById('storieTabTitle');
   if (storieTabTitle) storieTabTitle.textContent = t('storieTitle');
@@ -1335,9 +1336,22 @@ function _isMobileSheet() {
   return window.innerWidth <= 768;
 }
 
+/** Height of the fixed bottom tab bar on mobile (0 on desktop, where it's an in-flow rail). */
+function _tabBarHeightPx() {
+  if (!_isMobileSheet()) return 0;
+  return document.getElementById('appTabbar')?.getBoundingClientRect().height || 0;
+}
+
+/** Keeps --tabbar-h in sync so the sheet's CSS `bottom` offset always clears the tab bar. */
+function _syncTabBarHeightVar() {
+  document.documentElement.style.setProperty('--tabbar-h', _tabBarHeightPx() + 'px');
+}
+
 function _snapHeightPx(name) {
   const v = SHEET_SNAPS[name];
-  return v <= 1 ? Math.round(window.innerHeight * v) : v;
+  if (v > 1) return v; // 'peek' is an absolute pixel height, independent of the tab bar
+  const available = window.innerHeight - _tabBarHeightPx();
+  return Math.round(available * v);
 }
 
 /** Snap the mobile sheet to one of its three heights (no-op on desktop). */
@@ -1374,6 +1388,7 @@ function setupMobileSheetDrag(sidebar) {
   const handle = document.getElementById('sheetHandleMobile');
   if (!sidebar || !handle) return;
 
+  _syncTabBarHeightVar();
   let dragging = false, startY = 0, startH = 0;
 
   handle.addEventListener('touchstart', (e) => {
@@ -1410,6 +1425,7 @@ function setupMobileSheetDrag(sidebar) {
   // Crossing the mobile/desktop breakpoint: drop the inline height on desktop so the
   // normal in-flow sidebar CSS takes back over; re-snap if returning to mobile width.
   window.addEventListener('resize', () => {
+    _syncTabBarHeightVar();
     if (!_isMobileSheet()) {
       sidebar.style.height = '';
       sidebar.style.transition = '';
@@ -2492,6 +2508,10 @@ function setupSidebarTabs() {
       document.querySelectorAll('.sidebar-tab-content').forEach(c => c.classList.remove('active'));
       tab.classList.add('active');
       document.querySelector(`.sidebar-tab-content[data-tab="${target}"]`)?.classList.add('active');
+
+      // The tab bar is fixed/always tappable now, even while the sheet is collapsed to
+      // "peek" — expand it enough to actually reveal the tab that was just switched to.
+      if (_isMobileSheet() && _sheetState === 'peek') snapSheetTo('editorial');
 
       // ── Itinerari map: restore cluster on leave ──
       // Note: cluster is NOT removed on enter — pepite markers stay visible as backdrop.

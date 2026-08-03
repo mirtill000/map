@@ -33,7 +33,7 @@
         integrity="sha512-mQ77VzAakzdpWdgfL/lM1ksNy89uFgibRQANsNneSTMD/bj0Y/8+94XMwYhnbzx8eki2hrbPpDm0vD0CiT2lcg==" crossorigin="anonymous" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css"
         integrity="sha512-6ZCLMiYwTeli2rVh3XAPxy3YoR5fVxGdH/pz+KMCzRY2M65Emgkw00Yqmhh8qLGeYQ3LbVZGdmOX9KUjSKr0TA==" crossorigin="anonymous" />
-  <link rel="stylesheet" href="styles.css?v=26">
+  <link rel="stylesheet" href="styles.css?v=27">
 
   <title>Mappa - Pepite per Tutti</title>
   
@@ -71,6 +71,16 @@
   <!-- ═══ App Wrapper ═══ -->
   <div class="app-wrapper">
 
+    <!-- ═══ NATIVE TAB BAR ═══ Desktop: vertical icon rail on the left. Mobile/tablet:
+         fixed bar pinned to the viewport bottom, always tappable regardless of the
+         sheet's drag state (see --tabbar-h / _tabBarHeightPx() in app.js). -->
+    <nav class="app-tabbar" id="appTabbar">
+      <button class="sidebar-tab active" data-tab="pepite"><span class="tab-ic">✨</span><span class="tab-label">Pepite</span></button>
+      <button class="sidebar-tab" data-tab="itinerari"><span class="tab-ic">🗓️</span><span class="tab-label">Itinerari</span></button>
+      <button class="sidebar-tab" data-tab="eventi"><span class="tab-ic">📅</span><span class="tab-label">Eventi</span></button>
+      <button class="sidebar-tab" data-tab="storie" id="tabBtnStorie"><span class="tab-ic">📖</span><span class="tab-label">Diario</span></button>
+    </nav>
+
     <!-- ═══ LEFT SIDEBAR ═══ -->
     <aside class="sidebar" id="sidebar">
       <!-- Mobile only: drag handle for the bottom-sheet behavior (see setupMobileSheet in app.js) -->
@@ -92,13 +102,6 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
           </button>
         </div>
-      </div>
-
-      <div class="sidebar-tabs">
-        <button class="sidebar-tab active" data-tab="pepite">Pepite</button>
-        <button class="sidebar-tab" data-tab="itinerari">Itinerari</button>
-        <button class="sidebar-tab" data-tab="eventi">Eventi</button>
-        <button class="sidebar-tab" data-tab="storie" id="tabBtnStorie">Diario</button>
       </div>
 
       <!-- ═══ TAB: PEPITE ═══ -->
@@ -519,6 +522,6 @@
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"
           integrity="sha512-OFs3W4DIZ5ZkrDhBFtsCP6JXtMEDGmhl0QPlmWYBJay40TT1n3gt2Xuw8Pf/iezgW9CdabjkNChRqozl/YADmg==" crossorigin="anonymous"></script>
-  <script src="app.js?v=92"></script>
+  <script src="app.js?v=93"></script>
 </body>
 </html>
