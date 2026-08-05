@@ -581,48 +581,40 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
 
 
 /* ════════════════════════════════════════
-   NATIVE TAB BAR — vertical icon rail on desktop, fixed bottom bar on mobile
-   (see the @media (max-width: 768px) override further down for the mobile shape)
+   NATIVE TAB BAR — horizontal row inside the sidebar on desktop/tablet (as before);
+   becomes a fixed bar pinned to the viewport bottom on mobile — see the
+   @media (max-width: 768px) override further down for that shape.
    ════════════════════════════════════════ */
 .app-tabbar {
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  width: 72px;
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
-  gap: 2px;
-  padding: 14px 0;
-  background: var(--bg-card);
-  border-right: 1px solid var(--border);
-  z-index: 1000;
 }
 
 .sidebar-tab {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  margin: 0 8px;
-  padding: 9px 2px;
+  flex: 1;
+  padding: 12px 4px;
   font-family: var(--font-sans);
-  font-size: 0.6rem;
+  font-size: 0.68rem;
   font-weight: 500;
   color: var(--text-muted);
   background: none;
   border: none;
-  border-radius: var(--radius-sm);
+  border-bottom: 2px solid transparent;
   transition: all var(--transition);
-  letter-spacing: 0.02em;
+  text-align: center;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
 }
-.sidebar-tab .tab-ic { font-size: 1.2rem; line-height: 1; }
+/* Icons are a mobile-only affordance (see below) — desktop/tablet keep the plain text tabs. */
+.sidebar-tab .tab-ic { display: none; }
 
-.sidebar-tab:hover { color: var(--text-light); background: var(--gray-light); }
+.sidebar-tab:hover { color: var(--text-light); }
 .sidebar-tab.active {
   color: var(--text);
-  font-weight: 700;
-  background: var(--gray-light);
+  font-weight: 600;
+  border-bottom-color: var(--text);
 }
 
 /* Tab Content */
@@ -2940,21 +2932,36 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
 
   /* Native tab bar becomes a fixed bottom bar, pinned below the sheet (which stops
      var(--tabbar-h) short of the viewport edge — see snapSheetTo()/_tabBarHeightPx()
-     in app.js) so the tabs stay tappable no matter how tall the sheet is dragged. */
+     in app.js) so the tabs stay tappable no matter how tall the sheet is dragged.
+     Desktop/tablet keep the plain horizontal text tabs (see the base rules above)
+     — only mobile gets this icon+label bottom-bar treatment. */
   .app-tabbar {
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
     width: auto;
-    flex-direction: row;
-    align-items: stretch;
-    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
-    border-right: none;
+    border-bottom: none;
     border-top: 1px solid var(--border);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px));
     z-index: 1200;
   }
-  .app-tabbar .sidebar-tab { flex: 1; margin: 0 2px; }
+  .app-tabbar .sidebar-tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+    margin: 0 2px;
+    padding: 9px 2px;
+    font-size: 0.6rem;
+    letter-spacing: 0.02em;
+    border-bottom: none;
+    border-radius: var(--radius-sm);
+  }
+  .app-tabbar .sidebar-tab .tab-ic { display: block; font-size: 1.2rem; line-height: 1; }
+  .app-tabbar .sidebar-tab:hover { background: var(--gray-light); }
+  .app-tabbar .sidebar-tab.active { background: var(--gray-light); }
 
   .sheet-handle-mobile {
     display: flex;
