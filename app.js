@@ -153,9 +153,20 @@ const i18n = {
     storieTitle: 'Milano Design Week 2026',
     storieDesc: 'Racconti e scatti dalla Milano Design Week 2026.',
     dailyCardLabel: 'Pepita del Giorno',
-    dailyAbbina: 'Abbina con',
     openNow: 'Aperto ora',
     closedNow: 'Chiuso',
+    statusOpenUntil: (c) => `Aperto · chiude alle ${c}`,
+    statusOpensAt: (o) => `Chiuso · apre alle ${o}`,
+    statusOpensTomorrow: (o) => `Chiuso · apre domani alle ${o}`,
+    statusOpensDay: (d, o) => `Chiuso · apre ${d} alle ${o}`,
+    hoursTitle: 'Orari',
+    dayShort: ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'],
+    dayLong: ['lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato', 'domenica'],
+    quartiereOpen: (q) => `Scopri il quartiere ${q}`,
+    quartiereSummary: (n, q, cats) => `${n === 1 ? '1 pepita' : `${n} pepite`} in ${q}${cats ? `, soprattutto ${cats}` : ''}. Tocca un luogo per aprirlo, o mostrale tutte sulla mappa.`,
+    quartiereAnd: 'e',
+    quartierePlaces: 'I luoghi',
+    quartiereShowAll: 'Mostra sulla mappa',
     nearMe: 'Vicino a me',
     nearMeActive: 'Vicino a me ✓',
     nearMeYouAreHere: 'Sei qui',
@@ -351,9 +362,20 @@ const i18n = {
     storieTitle: 'Milan Design Week 2026',
     storieDesc: 'Stories and snapshots from Milan Design Week 2026.',
     dailyCardLabel: "Today's Gem",
-    dailyAbbina: 'Pair with',
     openNow: 'Open now',
     closedNow: 'Closed',
+    statusOpenUntil: (c) => `Open · closes at ${c}`,
+    statusOpensAt: (o) => `Closed · opens at ${o}`,
+    statusOpensTomorrow: (o) => `Closed · opens tomorrow at ${o}`,
+    statusOpensDay: (d, o) => `Closed · opens ${d} at ${o}`,
+    hoursTitle: 'Opening hours',
+    dayShort: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    dayLong: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+    quartiereOpen: (q) => `Explore the ${q} neighbourhood`,
+    quartiereSummary: (n, q, cats) => `${n === 1 ? '1 gem' : `${n} gems`} in ${q}${cats ? `, mostly ${cats}` : ''}. Tap a place to open it, or show them all on the map.`,
+    quartiereAnd: 'and',
+    quartierePlaces: 'The places',
+    quartiereShowAll: 'Show on the map',
     nearMe: 'Near me',
     nearMeActive: 'Near me ✓',
     nearMeYouAreHere: 'You are here',
@@ -789,7 +811,6 @@ async function loadPepiteData() {
   renderPepiteList();
   renderMarkers();
   renderItinerari();
-  renderDailyCard();
   renderMobileEditorialPreview();
   // If the Storie tab loaded before pepite, re-render now that cover images and tag lookups work
   if (storieLoaded) renderStorie();
@@ -882,6 +903,7 @@ function setupLangToggle() {
       if (storieLoaded) renderStorie();
       if (currentDetail) openDetail(currentDetail);
       if (currentEventDetail) openEventDetail(currentEventDetail);
+      if (currentQuartiereFilter) openQuartierePage(currentQuartiereFilter);
       if (document.getElementById('onboardingOverlay')?.style.display !== 'none') renderOnboardingSlide();
     });
   });
@@ -899,9 +921,8 @@ function applyLanguage() {
     const key = 'tab' + tab.dataset.tab.charAt(0).toUpperCase() + tab.dataset.tab.slice(1);
     tab.textContent = t(key);
   });
-  // Category label
-  const catLabel = document.querySelector('.sidebar-categories .section-label');
-  if (catLabel) catLabel.textContent = t('catLabel');
+  // Category row has no visible heading (single scrolling row) — keep it labelled for AT
+  document.getElementById('catNav')?.setAttribute('aria-label', t('catLabel'));
   // Category names
   const catTexts = {
     'all': 'catAll', 'Ristoranti Romantici': 'catRomantici',
@@ -1294,7 +1315,7 @@ function renderMarkers() {
   }
 
   markerCluster = L.markerClusterGroup({
-    maxClusterRadius: 48,
+    maxClusterRadius: 70, // fewer, roomier clusters — the map reads calmer at city zoom
     showCoverageOnHover: false,
     iconCreateFunction: (cluster) => {
       const count = cluster.getChildCount();
@@ -1470,7 +1491,7 @@ function renderEventiMarkers(activeId) {
   if (filtered.length === 0) return;
 
   eventiMarkersLayer = L.markerClusterGroup({
-    maxClusterRadius: 48,
+    maxClusterRadius: 70, // fewer, roomier clusters — the map reads calmer at city zoom
     showCoverageOnHover: false,
     iconCreateFunction: (cluster) => {
       const count = cluster.getChildCount();
@@ -1977,26 +1998,8 @@ function setupDetail() {
   // Save button handler is set via onclick in openDetail/openEventDetail
   // Do NOT use addEventListener here — it would double-fire with onclick
 
-  // Share
-  document.getElementById('detailShareBtn').addEventListener('click', async () => {
-    if (!currentDetail) return;
-    const shareData = {
-      title: currentDetail.nome,
-      text: t('shareText', currentDetail.nome, getDesc(currentDetail)),
-      url: window.location.href
-    };
-    if (navigator.share) {
-      try { await navigator.share(shareData); } catch (e) { /* cancelled */ }
-    } else {
-      window.open(`https://wa.me/?text=${encodeURIComponent(shareData.text)}`);
-    }
-  });
-
-  // Directions
-  document.getElementById('detailDirectionsBtn').addEventListener('click', () => {
-    if (!currentDetail || !currentDetail.lat) return;
-    window.open(`https://www.google.com/maps/dir/?api=1&destination=${currentDetail.lat},${currentDetail.lng}`);
-  });
+  // Share / Directions handlers are assigned via .onclick in openDetail / openEventDetail /
+  // openQuartierePage (a listener here as well would fire twice — two share sheets or tabs).
 
   // Close with Escape
   document.addEventListener('keydown', (e) => {
@@ -2088,6 +2091,7 @@ function setupDetailSwipe() {
 function openDetail(p) {
   const hadDetail = !!(currentDetail || currentEventDetail); // capture before reset
   resetQuartiereMode();
+  resetDetailSections('pepita');
   currentDetail = p;
   currentEventDetail = null; // clear event detail
   const panel = document.getElementById('detailPanel');
@@ -2123,24 +2127,16 @@ function openDetail(p) {
     indirizzoEl.style.display = '';
   } else if (indirizzoEl) { indirizzoEl.style.display = 'none'; }
 
+  // Hours: a status pill + weekly table when the text parses, the raw text otherwise
+  const week = parseOrariWeek(p.orari);
+  renderDetailFacts(p);
+  renderDetailHours(week);
   const orari = (currentLang === 'en' ? (p.orari_en || p.orari) : p.orari) || '';
   const orariEl = document.getElementById('detailOrari');
   const orariText = document.getElementById('detailOrariText');
   if (orariEl && orariText) {
     orariText.textContent = orari;
-    orariEl.style.display = orari ? '' : 'none';
-    // Open-now pill
-    orariEl.querySelectorAll('.open-now-pill').forEach(el => el.remove());
-    if (orari) {
-      const openState = isOpenNow(p);
-      if (openState === true) {
-        orariEl.insertAdjacentHTML('beforeend',
-          `<span class="open-now-pill open">${t('openNow')}</span>`);
-      } else if (openState === false) {
-        orariEl.insertAdjacentHTML('beforeend',
-          `<span class="open-now-pill closed">${t('closedNow')}</span>`);
-      }
-    }
+    orariEl.style.display = orari && !week ? '' : 'none';
   }
   document.getElementById('detailPrezzo').textContent = '';
   document.getElementById('detailDescrizione').textContent = getDesc(p);
@@ -2169,9 +2165,11 @@ function openDetail(p) {
     if (!currentDetail || !currentDetail.lat) return;
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${currentDetail.lat},${currentDetail.lng}`);
   };
+  setDetailPrimaryAction(dirBtn);
 
   // Restore share button for pepite
   const shareBtn = document.getElementById('detailShareBtn');
+  shareBtn.style.display = '';
   const svgShare = shareBtn.querySelector('svg');
   shareBtn.textContent = '';
   if (svgShare) shareBtn.appendChild(svgShare);
@@ -2240,11 +2238,11 @@ function openDetail(p) {
   panel.classList.add('active');
 
   // Fly map to pepita — always, regardless of call site.
-  // Zoom 17 ungroups most clusters (maxClusterRadius=48px covers ~43m at z17).
-  // After the animation settles, fall back to zoomToShowLayer if the marker
-  // is still inside a cluster (very dense areas, e.g. 5 Vie).
+  // Zoom 16 keeps a few surrounding streets in view; after the animation settles,
+  // fall back to zoomToShowLayer if the marker is still inside a cluster
+  // (dense areas such as 5 Vie or Porta Venezia).
   if (map && p.lat && p.lng) {
-    map.flyTo([p.lat, p.lng], 17, { duration: 0.8 });
+    map.flyTo([p.lat, p.lng], 16, { duration: 0.8 });
     const _marker = markers.find(m => m._pepitaId === p.id);
     if (_marker && markerCluster) {
       map.once('moveend', () => {
@@ -2269,6 +2267,58 @@ function openDetail(p) {
   }
 }
 
+// Hides every section only one detail mode fills (pepita / evento / quartiere), so nothing
+// leaks from whatever the panel showed before, and tags the panel with the current mode.
+function resetDetailSections(mode) {
+  const panel = document.getElementById('detailPanel');
+  panel.classList.toggle('pepita-mode', mode === 'pepita');
+  ['detailFacts', 'detailHours', 'quartiereList', 'detailIndirizzo', 'detailLinkedEvents', 'detailFonti', 'detailMapsBtn']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.style.display = 'none'; });
+}
+
+// The detail panel's actions row has one filled (.btn-main) button — the one the current
+// mode cares most about (directions for a pepita, share for an event, "show on map" for a
+// quartiere); CSS puts it first and makes it wider.
+function setDetailPrimaryAction(primary) {
+  document.querySelectorAll('.detail-actions .btn-action').forEach(b => {
+    b.classList.toggle('btn-main', b === primary);
+    b.classList.toggle('btn-secondary', b !== primary);
+  });
+}
+
+// Pills under a pepita's name: live open/closed status and its quartiere (opens the
+// neighbourhood page).
+function renderDetailFacts(p) {
+  const el = document.getElementById('detailFacts');
+  if (!el) return;
+  const parts = [];
+  const st = getOpenStatus(p);
+  if (st) parts.push(`<span class="detail-fact ${st.open ? 'open' : 'closed'}">${escapeHtml(st.label)}</span>`);
+  if (p.quartiere && pepite.some(x => x.quartiere === p.quartiere)) {
+    parts.push(`<button type="button" class="detail-fact link" aria-label="${escapeHtml(t('quartiereOpen', p.quartiere))}">📍 ${escapeHtml(p.quartiere)}</button>`);
+  }
+  el.innerHTML = parts.join('');
+  el.style.display = parts.length ? '' : 'none';
+  el.querySelector('.detail-fact.link')?.addEventListener('click', () => openQuartierePage(p.quartiere));
+}
+
+// Weekly opening hours (Mon→Sun, today highlighted) from parseOrariWeek's output.
+function renderDetailHours(week) {
+  const el = document.getElementById('detailHours');
+  if (!el) return;
+  if (!week) { el.innerHTML = ''; el.style.display = 'none'; return; }
+  const today = new Date().getDay() || 7;
+  el.innerHTML = `<span class="detail-hours-title">${escapeHtml(t('hoursTitle'))}</span>` +
+    t('dayShort').map((d, i) => {
+      const slots = week[i + 1];
+      const txt = slots.length
+        ? slots.map(([o, c]) => `${o}–${c}`).join(', ')
+        : `<span class="closed">${escapeHtml(t('closedNow'))}</span>`;
+      return `<div class="detail-hours-row${i + 1 === today ? ' today' : ''}"><span class="d">${escapeHtml(d)}</span><span>${txt}</span></div>`;
+    }).join('');
+  el.style.display = '';
+}
+
 function resetQuartiereMode() {
   if (!currentQuartiereFilter) return;
   currentQuartiereFilter = null;
@@ -2278,18 +2328,50 @@ function resetQuartiereMode() {
   document.getElementById('detailSaveBtn').style.display = '';
   document.getElementById('quartiereEmojiHero').style.display = 'none';
   document.getElementById('quartiereCats').style.display = 'none';
+  const list = document.getElementById('quartiereList');
+  if (list) { list.style.display = 'none'; list.innerHTML = ''; }
   const badge = document.getElementById('mapQuartiereBadge');
   if (badge) badge.style.display = 'none';
+  renderMarkers(); // bring back the pepite outside the quartiere
 }
 
-function openQuartiereDetail(q) {
-  currentQuartiereFilter = q.nome;
+// Bounds for a quartiere's pepite, ignoring stray points more than 1.5 km from the
+// median (a single mis-placed coordinate would otherwise zoom out to the whole city).
+function _quartiereBounds(list) {
+  const pts = list.filter(p => p.lat && p.lng);
+  if (!pts.length) return null;
+  const median = arr => { const s = [...arr].sort((a, b) => a - b); return s[Math.floor(s.length / 2)]; };
+  const cLat = median(pts.map(p => p.lat)), cLng = median(pts.map(p => p.lng));
+  const near = pts.filter(p => haversineKm(cLat, cLng, p.lat, p.lng) <= 1.5);
+  return L.latLngBounds((near.length ? near : pts).map(p => [p.lat, p.lng]));
+}
+
+// Neighbourhood page, built entirely from data.json (no hand-written copy): a generated
+// summary, the top categories and every pepita in it. Opened from the quartiere pill in
+// a pepita's detail panel.
+function openQuartierePage(nome) {
+  const pepiteInQ = pepite.filter(p => p.quartiere === nome);
+  if (pepiteInQ.length === 0) return;
+  resetDetailSections('quartiere');
+  currentQuartiereFilter = nome;
   currentDetail = null;
   currentEventDetail = null;
+  refreshActiveMarker(null);
+  // Not a shareable pepita any more — drop the #pepita-<id> hash without adding history
+  if (window.location.hash) history.replaceState(null, '', window.location.pathname);
 
   const panel = document.getElementById('detailPanel');
   panel.scrollTop = 0;
   panel.classList.add('active', 'quartiere-mode');
+
+  // Top categories, labelled in the current language
+  const cats = {};
+  pepiteInQ.forEach(p => {
+    if (!cats[p.categoria]) cats[p.categoria] = { n: 0, label: getCat(p) };
+    cats[p.categoria].n++;
+  });
+  const topCats = Object.entries(cats).sort((a, b) => b[1].n - a[1].n);
+  const emoji = categoryEmoji[topCats[0][0]] || '📍';
 
   // Header: hide image, show emoji hero
   document.getElementById('detailPicture').style.display = 'none';
@@ -2297,71 +2379,84 @@ function openQuartiereDetail(q) {
   document.getElementById('detailImgCredit').style.display = 'none';
   const hero = document.getElementById('quartiereEmojiHero');
   hero.style.display = 'flex';
-  document.getElementById('quartiereEmojiLarge').textContent = q.emoji;
+  document.getElementById('quartiereEmojiLarge').textContent = emoji;
 
-  // Body fields
   document.getElementById('detailMeta').textContent = '';
-  document.getElementById('detailNome').textContent = q.nome;
+  document.getElementById('detailNome').textContent = nome;
   document.getElementById('detailQuartiere').textContent = 'Milano';
-
-  // Indirizzo / orari hidden
-  const indirizzoEl = document.getElementById('detailIndirizzo');
-  if (indirizzoEl) indirizzoEl.style.display = 'none';
   const orariEl = document.getElementById('detailOrari');
   if (orariEl) orariEl.style.display = 'none';
 
-  // Pepite count as badge
-  const pepiteInQ = pepite.filter(p => p.quartiere === q.nome);
-  const prezzoEl = document.getElementById('detailPrezzo');
-  prezzoEl.innerHTML = `<span class="quartiere-count-badge">${pepiteInQ.length} ${currentLang === 'en' ? 'gems' : 'pepite'}</span>`;
-
-  // Top categories
-  const cats = {};
-  pepiteInQ.forEach(p => { cats[p.categoria] = (cats[p.categoria] || 0) + 1; });
-  const topCats = Object.entries(cats).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  document.getElementById('detailPrezzo').innerHTML =
+    `<span class="quartiere-count-badge">${escapeHtml(t('pepiteCount', pepiteInQ.length))}</span>`;
   const catsEl = document.getElementById('quartiereCats');
   catsEl.style.display = 'flex';
-  catsEl.innerHTML = topCats.map(([cat, n]) =>
-    `<span class="q-cat-tag">${categoryEmoji[cat] || '✨'} ${escapeHtml(cat)}</span>`
+  catsEl.innerHTML = topCats.slice(0, 4).map(([cat, c]) =>
+    `<span class="q-cat-tag">${categoryEmoji[cat] || '✨'} ${escapeHtml(c.label)}</span>`
   ).join('');
 
-  // Description
-  document.getElementById('detailDescrizione').textContent = t(q.descKey);
+  const catWords = topCats.slice(0, 2).map(([, c]) => c.label.toLowerCase()).join(` ${t('quartiereAnd')} `);
+  document.getElementById('detailDescrizione').textContent = t('quartiereSummary', pepiteInQ.length, nome, catWords);
 
-  // Actions: "Filtra Pepite" replaces directions; hide share
-  const shareBtn = document.getElementById('detailShareBtn');
-  shareBtn.style.display = 'none';
+  // Every pepita in the quartiere, alphabetical
+  const list = document.getElementById('quartiereList');
+  const sorted = [...pepiteInQ].sort((a, b) => a.nome.localeCompare(b.nome, 'it'));
+  list.innerHTML = `<span class="quartiere-list-title">${escapeHtml(t('quartierePlaces'))}</span>` +
+    sorted.map(p => `<div class="quartiere-list-item" data-id="${p.id}" role="button" tabindex="0">
+      ${p.immagine ? `<img src="${escapeHtml(p.immagine)}" alt="" loading="lazy">` : `<span class="quartiere-list-noimg">${categoryEmoji[p.categoria] || '✨'}</span>`}
+      <div><b>${escapeHtml(p.nome)}</b><span>${categoryEmoji[p.categoria] || '✨'} ${escapeHtml(getCat(p))}</span></div>
+    </div>`).join('');
+  list.querySelectorAll('img').forEach(img => {
+    img.onerror = function() {
+      const p = pepite.find(x => x.id === +this.closest('.quartiere-list-item')?.dataset.id);
+      const ph = document.createElement('span');
+      ph.className = 'quartiere-list-noimg';
+      ph.textContent = (p && categoryEmoji[p.categoria]) || '✨';
+      this.replaceWith(ph);
+    };
+  });
+  list.style.display = '';
+  const openItem = el => { const p = pepite.find(x => x.id === +el.dataset.id); if (p) openDetail(p); };
+  list.onclick = e => { const item = e.target.closest('.quartiere-list-item'); if (item) openItem(item); };
+  list.onkeydown = e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const item = e.target.closest('.quartiere-list-item');
+    if (!item) return;
+    e.preventDefault();
+    openItem(item);
+  };
+
+  // Actions: "Show on the map" is the only one (no share for a quartiere)
+  document.getElementById('detailShareBtn').style.display = 'none';
   const dirBtn = document.getElementById('detailDirectionsBtn');
   dirBtn.style.display = '';
-  dirBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> ${currentLang === 'en' ? 'See Pepite' : 'Vedi le Pepite'}`;
+  dirBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> ${escapeHtml(t('quartiereShowAll'))}`;
   dirBtn.onclick = () => {
-    resetQuartiereMode();
-    panel.classList.remove('active');
-    // Switch to Pepite tab, filter by quartiere
-    document.querySelectorAll('.sidebar-tab').forEach(tb => tb.classList.remove('active'));
-    document.querySelectorAll('.sidebar-tab-content').forEach(c => c.classList.remove('active'));
-    document.querySelector('.sidebar-tab[data-tab="pepite"]').classList.add('active');
-    document.getElementById('tabPepite').classList.add('active');
-    document.getElementById('searchInput').value = q.nome;
+    // Close the page and leave the Pepite list filtered to this quartiere
+    closeDetail();
+    document.querySelector('.sidebar-tab[data-tab="pepite"]')?.click();
+    document.getElementById('searchInput').value = nome;
     currentFilter = 'all';
     document.querySelectorAll('.cat-item').forEach(i => i.classList.remove('active'));
-    document.querySelector('.cat-item[data-cat="all"]').classList.add('active');
+    document.querySelector('.cat-item[data-cat="all"]')?.classList.add('active');
     renderPepiteList();
     renderMarkers();
   };
+  setDetailPrimaryAction(dirBtn);
 
-  // Filter markers and zoom
+  // Filter markers and zoom — on desktop the panel covers the right of the map, so pad for it
   renderMarkers();
-  const withCoords = pepiteInQ.filter(p => p.lat && p.lng);
-  if (map && withCoords.length > 0) {
-    map.fitBounds(L.latLngBounds(withCoords.map(p => [p.lat, p.lng])).pad(0.2));
+  const bounds = _quartiereBounds(pepiteInQ);
+  if (map && bounds) {
+    const side = _isMobileSheet() ? 0 : panel.offsetWidth;
+    map.flyToBounds(bounds, { paddingTopLeft: [40, 40], paddingBottomRight: [side + 40, 40], maxZoom: 16, duration: 0.8 });
   }
 
   // Show map filter badge
   const badge = document.getElementById('mapQuartiereBadge');
   if (badge) {
     badge.style.display = 'flex';
-    document.getElementById('mapQuartiereBadgeName').textContent = `${q.emoji} ${q.nome}`;
+    document.getElementById('mapQuartiereBadgeName').textContent = `${emoji} ${nome}`;
     document.getElementById('mapQuartiereBadgeClear').onclick = () => {
       closeDetail();
     };
@@ -3578,6 +3673,8 @@ function renderEventi() {
 // ── Open Event Detail ──
 function openEventDetail(ev) {
   const hadDetail = !!(currentDetail || currentEventDetail); // capture before reset
+  resetQuartiereMode();
+  resetDetailSections('evento');
   currentEventDetail = ev;
   currentDetail = null; // clear pepite detail
   const panel = document.getElementById('detailPanel');
@@ -3719,6 +3816,8 @@ function openEventDetail(ev) {
 
   // Detail actions area: Share + Calendar (replace Directions)
   const shareBtn = document.getElementById('detailShareBtn');
+  shareBtn.style.display = '';
+  setDetailPrimaryAction(shareBtn);
   const svgShare = shareBtn.querySelector('svg');
   shareBtn.textContent = '';
   if (svgShare) shareBtn.appendChild(svgShare);
@@ -4888,12 +4987,38 @@ function isOpenNow(p) {
 }
 
 function _computeOpenNow(p, now) {
-  const orari = p.orari;
-  if (!orari) return null; // unknown
+  const week = parseOrariWeek(p.orari);
+  if (!week) return p.orari ? false : null; // unparseable text never counts as "open now"
+  return !!_openSlotAt(week, now);
+}
 
-  const currentDayIT = now.getDay() === 0 ? 7 : now.getDay(); // IT: Lun=1…Dom=7
-  const currentMins  = now.getHours() * 60 + now.getMinutes();
+function _orariMins(t) {
+  const [h, m] = t.split(':').map(Number);
+  return h * 60 + m;
+}
 
+// The slot of `week` (parseOrariWeek output) that is open at `now`, or null. An overnight
+// slot (e.g. Sab 19:00–02:00) belongs to the day it starts on: it covers Saturday from
+// 19:00 and Sunday until 02:00 — not the early hours of Saturday itself.
+function _openSlotAt(week, now) {
+  const today     = now.getDay() || 7; // IT: Lun=1…Dom=7
+  const yesterday = today === 1 ? 7 : today - 1;
+  const cur       = now.getHours() * 60 + now.getMinutes();
+  return week[today].find(([o, c]) => {
+    const om = _orariMins(o), cm = _orariMins(c);
+    return cm <= om ? cur >= om : cur >= om && cur < cm;
+  }) || week[yesterday].find(([o, c]) => {
+    const cm = _orariMins(c);
+    return cm <= _orariMins(o) && cur < cm;
+  }) || null;
+}
+
+// Parses an Italian `orari` string into a week: { 1: [['12:30','14:30'], …], …, 7: [] }
+// (IT numbering, Lun=1…Dom=7). Returns null when nothing in it is recognisable, so callers
+// can fall back to showing the raw text. Shared by isOpenNow, the detail status pill and
+// the weekly hours table, so all three always agree.
+function parseOrariWeek(orari) {
+  if (!orari) return null;
   const dayIT = { lun:1, mar:2, mer:3, gio:4, ven:5, sab:6, dom:7 };
 
   function parseDays(str) {
@@ -4916,27 +5041,20 @@ function _computeOpenNow(p, now) {
     return days;
   }
 
-  function parseMins(t) {
-    const [h, m] = t.split(':').map(Number);
-    return h * 60 + m;
-  }
-
-  function inRange(open, close) {
-    // Handles overnight: e.g. 22:00–02:00
-    if (close < open) return currentMins >= open || currentMins < close;
-    return currentMins >= open && currentMins < close;
-  }
+  const week = {};
+  for (let d = 1; d <= 7; d++) week[d] = [];
+  const closed = new Set();
+  let lastDays = null;
+  let recognised = false;
 
   // Split only on ", " (comma + space): a bare comma with no following space joins a
   // day list that shares one time range (e.g. "Mer,Gio 18:30–23:30") and must stay together.
   const segments = orari.split(/,\s+/).map(s => s.trim()).filter(Boolean);
-  let lastDays = null;
-
   for (const seg of segments) {
-    // "Chiuso Lun-Mar" or "Chiuso Dom"
+    // "Chiuso Lun-Mar" or "Chiuso Dom" — wins over any slot listed for those days
     if (/^chiuso/i.test(seg)) {
-      const closedDays = parseDays(seg.replace(/^chiuso\s*/i, ''));
-      if (closedDays.includes(currentDayIT)) return false;
+      parseDays(seg.replace(/^chiuso\s*/i, '')).forEach(d => closed.add(d));
+      recognised = true;
       continue;
     }
 
@@ -4948,18 +5066,42 @@ function _computeOpenNow(p, now) {
     const tOnly = seg.match(/^(\d{1,2}:\d{2})[-–](\d{1,2}:\d{2})$/);
 
     if (full) {
+      // A later day group overrides an earlier, broader one for the days it names
+      // ("Lun-Dom 18:00–01:00, Ven,Sab 18:00–02:00" = Fri/Sat until 02:00, not both slots)
       lastDays = parseDays(full[1]);
-      if (lastDays.includes(currentDayIT)) {
-        if (inRange(parseMins(full[2]), parseMins(full[3]))) return true;
-      }
+      lastDays.forEach(d => { week[d] = [[full[2], full[3]]]; });
+      if (lastDays.length) recognised = true;
     } else if (tOnly && lastDays) {
-      if (lastDays.includes(currentDayIT)) {
-        if (inRange(parseMins(tOnly[1]), parseMins(tOnly[2]))) return true;
-      }
+      lastDays.forEach(d => week[d].push([tOnly[1], tOnly[2]]));
     }
   }
+  if (!recognised) return null;
+  closed.forEach(d => { week[d] = []; });
+  for (let d = 1; d <= 7; d++) week[d].sort((a, b) => _orariMins(a[0]) - _orariMins(b[0]));
+  return week;
+}
 
-  return false;
+// Live status line for the detail panel: "Aperto · chiude alle 23:00",
+// "Chiuso · apre alle 19:00" / "… domani alle …" / "… giovedì alle …". null if unknown.
+function getOpenStatus(p, now = new Date()) {
+  const week = parseOrariWeek(p.orari);
+  if (!week) return null;
+  const today = now.getDay() || 7;
+  const cur   = now.getHours() * 60 + now.getMinutes();
+  const openSlot = _openSlotAt(week, now);
+  if (openSlot) return { open: true, label: t('statusOpenUntil', openSlot[1]) };
+  const later = week[today].find(([o]) => _orariMins(o) > cur);
+  if (later) return { open: false, label: t('statusOpensAt', later[0]) };
+  for (let i = 1; i <= 7; i++) {
+    const d = ((today - 1 + i) % 7) + 1;
+    if (week[d].length) {
+      return {
+        open: false,
+        label: i === 1 ? t('statusOpensTomorrow', week[d][0][0]) : t('statusOpensDay', t('dayLong')[d - 1], week[d][0][0])
+      };
+    }
+  }
+  return null;
 }
 
 // ══════════════════════════════════════════════════════
@@ -5048,125 +5190,45 @@ function updateOGTags(p) {
 }
 
 // ══════════════════════════════════════════════════════
-//  FEATURE 18 — PEPITA DEL GIORNO EDITORIALE
+//  FEATURE 18 — PEPITA DEL GIORNO
 // ══════════════════════════════════════════════════════
 
-function getPurcheOggi(p) {
-  const now  = new Date();
-  const h    = now.getHours();
-  const dow  = now.getDay(); // 0 = domenica
-  const isWE = dow === 0 || dow === 6;
-
-  const isMorning   = h >= 6  && h < 12;
-  const isAfternoon = h >= 12 && h < 17;
-  const isEvening   = h >= 17 && h < 21;
-
-  const phraseMap = {
-    'Caffè & Bistrot': {
-      morning:   isWE ? 'Il sabato inizia meglio con un cornetto perfetto qui.'
-                      : 'La colazione giusta prima di tutto.',
-      afternoon: 'La pausa pomeriggio ideale per rallentare.',
-      evening:   'Un ultimo caffè prima di sera.',
-      night:     'Per gli amanti del tardo espresso.'
-    },
-    'Ristoranti Romantici': {
-      morning:   'Prenota già per stasera — i tavoli finiscono.',
-      afternoon: isWE ? 'Un pranzo romantico? È ancora in tempo.'
-                      : 'Perfetto per un appuntamento serale.',
-      evening:   'La serata ideale inizia qui.',
-      night:     'La notte è giovane — e questo posto anche.'
-    },
-    'Aperitivi': {
-      morning:   isWE ? 'Brunch-aperitivo: la combo del weekend.'
-                      : 'Segnatelo per stasera.',
-      afternoon: 'Happy hour tra un\'ora. Ci sei?',
-      evening:   'È l\'ora migliore per essere qui.',
-      night:     'Il posto giusto per continuare la serata.'
-    },
-    'Oasi Segrete': {
-      morning:   'Il mattino perfetto per scoprire angoli nascosti.',
-      afternoon: isWE ? 'La Milano segreta aspetta.'
-                      : 'Fuga pomeridiana dalla routine.',
-      evening:   'La luce del tramonto trasforma tutto.',
-      night:     'Un segreto che vale la notte.'
-    },
-    'Botteghe': {
-      morning:   'Prima della folla — il momento migliore.',
-      afternoon: 'Pomeriggio di scoperte artigiane.',
-      evening:   'Le botteghe migliori aprono tardi.',
-      night:     'Vernissage, eventi, aperture speciali.'
-    },
-    'Brunch & Colazioni': {
-      morning:   isWE ? 'Il brunch del weekend ti aspetta.'
-                      : 'La colazione perfetta per iniziare.',
-      afternoon: 'Brunch tardivo — un lusso che ti meriti.',
-      evening:   'Per la cena leggera che sembra un brunch.',
-      night:     'Qualcuno ci va anche di notte. Davvero.'
-    },
-    'Cascine': {
-      morning:   'L\'aria di campagna in città al mattino presto.',
-      afternoon: isWE ? 'La gita fuori porta senza uscire da Milano.'
-                      : 'Una pausa verde tra grigi urbani.',
-      evening:   'Il tramonto sulle cascine vale il viaggio.',
-      night:     'Silenzio e stelle — rarità assoluta in città.'
-    },
-    'Merende': {
-      morning:   'Per chi fa colazione due volte. Nessun giudizio.',
-      afternoon: 'L\'ora della merenda è sacra. Rispettala.',
-      evening:   'Merenda serale: il terzo pasto milanese.',
-      night:     'Dolcezza notturna per chi sa dove cercare.'
-    }
-  };
-
-  const def = {
-    morning:   isWE ? 'Il weekend migliora con le scoperte giuste.'
-                    : 'Inizia la giornata con una pepita.',
-    afternoon: 'Il pomeriggio milanese ha un posto per te.',
-    evening:   'La serata si fa bella da qui.',
-    night:     'Le pepite vere non dormono mai.'
-  };
-
-  const phrases = phraseMap[p.categoria] || def;
-  if (isMorning)   return phrases.morning;
-  if (isAfternoon) return phrases.afternoon;
-  if (isEvening)   return phrases.evening;
-  return phrases.night;
-}
-
-function getPairedPepita(daily) {
-  if (!daily || pepite.length < 2) return null;
+function getDailyPepita() {
+  if (pepite.length === 0) return null;
   const now = new Date();
   const doy = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
-
-  // Prefer same quartiere, different category
-  const sameQ = pepite.filter(p =>
-    p.id !== daily.id &&
-    p.categoria !== daily.categoria &&
-    p.quartiere === daily.quartiere
-  );
-  if (sameQ.length > 0) return sameQ[doy % sameQ.length];
-
-  // Fallback: different category, any quartiere
-  const diffCat = pepite.filter(p =>
-    p.id !== daily.id &&
-    p.categoria !== daily.categoria
-  );
-  if (diffCat.length > 0) return diffCat[(doy + 1) % diffCat.length];
-
-  return null;
+  return pepite[doy % pepite.length];
 }
 
-// ── Mobile bottom-sheet editorial preview (Pepite tab, mobile only) ──
-// Surfaces the same curated content as the desktop's floating daily card + Diario tab,
-// as the sheet's "editorial" resting state — see setupMobileSheetDrag.
+// ── Editorial preview (Pepite tab) ──
+// "Pepita del giorno" strip at every width; on mobile also a Diario teaser and the My Day
+// CTA, as the bottom sheet's "editorial" resting state — see setupMobileSheetDrag.
 function renderMobileEditorialPreview() {
   const dailyEl   = document.getElementById('medDaily');
   const dailyText = document.getElementById('medDailyText');
-  if (dailyEl && dailyText && pepite.length > 0) {
-    const now   = new Date();
-    const doy   = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
-    const daily = pepite[doy % pepite.length];
+  const daily     = getDailyPepita();
+  if (dailyEl && dailyText && daily) {
     dailyText.innerHTML = `<b>${escapeHtml(t('dailyCardLabel'))}</b> — ${escapeHtml(daily.nome)}`;
+    const thumb = document.getElementById('medDailyThumb');
+    if (thumb) {
+      thumb.textContent = '';
+      if (daily.immagine) {
+        const img = document.createElement('img');
+        img.src = daily.immagine;
+        img.alt = '';
+        img.onerror = () => { thumb.textContent = categoryEmoji[daily.categoria] || '✨'; };
+        thumb.appendChild(img);
+      } else {
+        thumb.textContent = categoryEmoji[daily.categoria] || '✨';
+      }
+    }
+    dailyEl.setAttribute('aria-label', `${t('dailyCardLabel')}: ${daily.nome}`);
+    dailyEl.onclick = () => openDetail(daily);
+    dailyEl.onkeydown = e => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      openDetail(daily);
+    };
     dailyEl.style.display = 'flex';
   }
 
@@ -5181,10 +5243,14 @@ function renderMobileEditorialPreview() {
         return `<div class="med-story" data-id="${escapeHtml(s.id)}" role="button" tabindex="0" aria-label="${escapeHtml(title)}"><span>${escapeHtml(s.emoji || '📖')} ${escapeHtml(title)}</span></div>`;
       }).join('');
       storiesRow.querySelectorAll('.med-story').forEach(el => {
-        const activate = () => {
-          const s = storieData.find(x => String(x.id) === el.dataset.id);
-          if (s) openStoria(s);
-        };
+        const s = storieData.find(x => String(x.id) === el.dataset.id);
+        // Cover photo: same source as the Diario tab's cards (first slide with pics)
+        const cover = s?.slides?.[0]?.pics || s?.slides?.find(x => x.pics)?.pics;
+        if (cover) {
+          el.style.backgroundImage = `url(${JSON.stringify(cover)})`;
+          el.classList.add('has-cover');
+        }
+        const activate = () => { if (s) openStoria(s); };
         el.addEventListener('click', activate);
         el.addEventListener('keydown', e => {
           if (e.key !== 'Enter' && e.key !== ' ') return;
@@ -5200,61 +5266,6 @@ function renderMobileEditorialPreview() {
 
   const myDayText = document.getElementById('mobileMyDayHintText');
   if (myDayText) myDayText.textContent = t('myDayHint');
-}
-
-function renderDailyCard() {
-  const container = document.getElementById('dailyCard');
-  if (!container || pepite.length === 0) return;
-
-  const now  = new Date();
-  const doy  = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
-  const daily = pepite[doy % pepite.length];
-
-  const paired  = getPairedPepita(daily);
-  const perche  = getPurcheOggi(daily);
-  const emoji   = categoryEmoji[daily.categoria] || '✨';
-  const pEmoji  = paired ? (categoryEmoji[paired.categoria] || '✨') : null;
-  const label   = t('dailyCardLabel');
-  const abbinaL = t('dailyAbbina');
-
-  // Fallback SVG for missing images
-  const fallbackSvg = `data:image/svg+xml,${encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="#F4E1D2"/><text x="32" y="40" text-anchor="middle" font-size="26">${emoji}</text></svg>`
-  )}`;
-
-  const dailyImgSrc  = daily.immagine || fallbackSvg;
-  const dailyImgWebp = _webpUrl(dailyImgSrc);
-  const dailyPicture = dailyImgWebp !== dailyImgSrc
-    ? `<picture><source type="image/webp" srcset="${escapeHtml(dailyImgWebp)}"><img class="daily-img" src="${escapeHtml(dailyImgSrc)}" alt="${escapeHtml(daily.nome)}" loading="lazy"></picture>`
-    : `<img class="daily-img" src="${escapeHtml(dailyImgSrc)}" alt="${escapeHtml(daily.nome)}" loading="lazy">`;
-  container.innerHTML = `
-    <span class="daily-badge">${label}</span>
-    ${dailyPicture}
-    <div class="daily-info">
-      <span class="daily-cat">${emoji} ${escapeHtml(daily.categoria)}</span>
-      <h3>${escapeHtml(daily.nome)}</h3>
-      <p class="daily-perche">${escapeHtml(perche)}</p>
-      ${paired ? `
-      <div class="daily-abbina">
-        <span class="daily-abbina-lbl">${abbinaL}</span>
-        <span class="daily-abbina-name" data-id="${paired.id}">${pEmoji} ${escapeHtml(paired.nome)}</span>
-      </div>` : ''}
-    </div>
-  `;
-
-  // Attach error handler via DOM property — avoids inline handler and potential XSS
-  const dailyImg = container.querySelector('.daily-img');
-  if (dailyImg) dailyImg.onerror = function() { this.onerror = null; this.src = fallbackSvg; };
-
-  container.style.display = ''; // reveal now that content is ready
-  container.onclick = () => openDetail(daily);
-
-  if (paired) {
-    container.querySelector('.daily-abbina-name')?.addEventListener('click', e => {
-      e.stopPropagation();
-      openDetail(paired);
-    });
-  }
 }
 
 // ── Service Worker Registration + update listener ──

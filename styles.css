@@ -370,13 +370,24 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
   padding-bottom: 12px;
 }
 
+/* One horizontally scrolling row instead of a wrapped block — the list starts much higher.
+   Bleeds to the sidebar edges (sections have 24px side padding) and fades out on the right
+   to hint there's more. */
 .cat-nav {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 -24px;
+  padding: 0 24px;
+  -webkit-mask-image: linear-gradient(90deg, #000 85%, transparent);
+          mask-image: linear-gradient(90deg, #000 85%, transparent);
 }
+.cat-nav::-webkit-scrollbar { display: none; }
 
 .cat-item {
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -1289,118 +1300,6 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
   transform: none;
 }
 
-/* Daily Card (floating bottom-left on map) */
-.daily-card {
-  display: none; /* shown by JS after data loads */
-  position: absolute;
-  bottom: 24px;
-  left: 24px;
-  z-index: 600;
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  box-shadow: 0 4px 24px rgba(0,0,0,0.14);
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  padding: 14px 16px 12px 10px;
-  cursor: pointer;
-  transition: all var(--transition);
-  max-width: 340px;
-  border: 1px solid rgba(0,0,0,0.06);
-}
-
-.daily-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-}
-
-.daily-badge {
-  position: absolute;
-  top: -10px;
-  left: 12px;
-  background: var(--text);
-  color: var(--bg-card);
-  font-size: 0.6rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.15em;
-  padding: 3px 12px;
-  border-radius: 2px;
-}
-
-.daily-img {
-  width: 60px;
-  height: 60px;
-  border-radius: 2px;
-  object-fit: cover;
-  flex-shrink: 0;
-  filter: grayscale(15%);
-}
-
-.daily-info h3 {
-  font-size: 0.95rem;
-  margin-bottom: 2px;
-}
-
-.daily-info span {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  letter-spacing: 0.02em;
-}
-
-.daily-cat {
-  display: block;
-  font-size: 0.62rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--text-muted);
-  margin-bottom: 3px;
-}
-
-.daily-info h3 {
-  font-size: 0.95rem;
-  margin: 0 0 4px;
-  line-height: 1.25;
-}
-
-.daily-perche {
-  font-size: 0.76rem;
-  color: var(--text-muted);
-  margin: 0;
-  line-height: 1.5;
-  font-style: italic;
-}
-
-.daily-abbina {
-  margin-top: 8px;
-  padding-top: 7px;
-  border-top: 1px solid rgba(0,0,0,0.08);
-  font-size: 0.7rem;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  flex-wrap: wrap;
-}
-
-.daily-abbina-lbl {
-  color: var(--text-muted);
-  font-weight: 400;
-}
-
-.daily-abbina-name {
-  font-weight: 700;
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  transition: opacity 0.15s;
-}
-
-.daily-abbina-name:hover {
-  opacity: 0.65;
-}
-
-
 /* ════════════════════════════════════════
    RIGHT DETAIL PANEL
    ════════════════════════════════════════ */
@@ -1564,13 +1463,46 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
   padding-left: 20px;
 }
 
+/* Status + quartiere pills under the title (pepita mode) */
+.detail-facts { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 16px; }
+.detail-fact {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--font-sans); font-size: 0.74rem; line-height: 1.2;
+  padding: 5px 10px; border-radius: 20px;
+  background: var(--gray-light); color: var(--text-light); border: 1px solid var(--border);
+}
+.detail-fact.open   { background: #eaf6ee; color: #1f7a3f; border-color: #cfe8d7; font-weight: 600; }
+.detail-fact.closed { background: #fbeceb; color: #a33a32; border-color: #f2d3d0; font-weight: 600; }
+.detail-fact.link   { cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.detail-fact.link:hover { border-color: var(--text); color: var(--text); }
+/* The quartiere pill replaces the "Quartiere, Milano" line for pepite */
+.detail-panel.pepita-mode .detail-location { display: none; }
+
+/* Actions sit right under the essentials; the mode's primary (.btn-main) goes first and wider */
 .detail-actions {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 8px;
-  padding-top: 24px;
-  border-top: 1px solid var(--border);
+  margin: 4px 0 14px;
 }
+.detail-actions .btn-action { flex: 1 1 auto; width: auto; padding: 12px; }
+.detail-actions .btn-main { flex-grow: 2; order: -1; }
+.detail-indirizzo { margin-bottom: 20px; }
+
+/* Weekly opening hours, today highlighted */
+.detail-hours { margin: -8px 0 28px; border-top: 1px solid var(--border); }
+.detail-hours-title {
+  display: block; padding: 14px 0 8px;
+  font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted);
+}
+.detail-hours-row {
+  display: grid; grid-template-columns: 52px 1fr;
+  font-size: 0.8rem; padding: 4px 0; color: var(--text-light);
+  font-variant-numeric: tabular-nums;
+}
+.detail-hours-row.today { color: var(--text); font-weight: 700; }
+.detail-hours-row.today .d::after { content: ' •'; color: var(--accent-rosa-deep); }
+.detail-hours-row .closed { color: var(--text-muted); font-style: italic; font-weight: 400; }
 
 .btn-action {
   width: 100%;
@@ -1703,8 +1635,9 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
 }
 
 .cluster-inner {
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
+  margin: 5px;
   border-radius: 50%;
   background: #fd7e75;
   color: #fff;
@@ -1712,9 +1645,9 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
   align-items: center;
   justify-content: center;
   font-family: var(--font-sans);
-  font-size: 0.8rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.22);
   letter-spacing: 0.02em;
   transition: transform 0.2s ease;
 }
@@ -2105,6 +2038,27 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
   border-radius: 2px;
   white-space: nowrap;
 }
+
+/* Every pepita in the quartiere (quartiere mode) */
+.quartiere-list { margin: -8px 0 28px; }
+.quartiere-list-title {
+  display: block; margin-bottom: 4px;
+  font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted);
+}
+.quartiere-list-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 0; border-bottom: 1px solid var(--border); cursor: pointer;
+}
+.quartiere-list-item:hover b { text-decoration: underline; text-underline-offset: 2px; }
+.quartiere-list-item:focus-visible { outline: 2px solid var(--accent-rosa-deep); outline-offset: 2px; }
+.quartiere-list-item img,
+.quartiere-list-noimg {
+  width: 46px; height: 46px; border-radius: 4px; object-fit: cover; flex-shrink: 0;
+  background: var(--gray-light); display: flex; align-items: center; justify-content: center;
+}
+.quartiere-list-item .quartiere-list-noimg { font-size: 1.3rem; }
+.quartiere-list-item b { display: block; font-size: 0.86rem; }
+.quartiere-list-item span { font-size: 0.72rem; color: var(--text-muted); }
 
 /* ── Map Quartiere Badge ── */
 .map-quartiere-badge {
@@ -2878,12 +2832,34 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
    desktop, where the sidebar already shows everything at once with no sheet.
    Declared *before* the responsive block below so its mobile override (same
    specificity) actually wins in the cascade instead of being shadowed by source order. */
-.mobile-editorial-preview { display: none; }
+.mobile-editorial-preview { display: block; padding: 0 24px; margin-top: 12px; }
+/* Desktop has the Diario and Itinerari tabs for these; !important beats the inline display JS sets */
+@media (min-width: 769px) {
+  .mobile-editorial-preview .med-stories,
+  .mobile-editorial-preview #mobileMyDayHint { display: none !important; }
+}
+.med-daily {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--text); color: var(--bg-card);
+  border-radius: var(--radius); padding: 8px 12px 8px 8px;
+  font-size: 0.76rem; cursor: pointer; margin-bottom: 4px;
+}
+.med-daily b { font-weight: 700; }
+.med-daily-thumb {
+  width: 34px; height: 34px; border-radius: 3px; overflow: hidden; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 1rem;
+  background: rgba(255,255,255,0.12);
+}
+.med-daily-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.med-daily-text { flex: 1; min-width: 0; }
+.med-daily-go { opacity: 0.6; flex-shrink: 0; }
+.med-daily:hover .med-daily-go { opacity: 1; }
 
 /* Keyboard focus ring for list cards made keyboard-operable (role="button" + tabindex="0") */
 .pepita-item:focus-visible,
 .evento-card:focus-visible,
 .itinerario-stop:focus-visible,
+.med-daily:focus-visible,
 .med-story:focus-visible {
   outline: 2px solid var(--accent-rosa-deep);
   outline-offset: 2px;
@@ -2938,7 +2914,17 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
 
   .sidebar-toggle-close {
     display: flex;
+    width: 30px;
+    height: 30px;
   }
+
+  /* Compact sheet header: the brand is already in the top bar and global search has its
+     own entry there, so the sheet only keeps language + close in a slim right-aligned row */
+  .sidebar-header { padding: 4px 12px 2px; justify-content: flex-end; border-bottom: none; }
+  .sidebar-header .brand { display: none; }
+  .sidebar-header-actions .global-search-btn { display: none; }
+  .lang-toggle { border-color: transparent; }
+  .lang-btn { padding: 4px 8px; font-size: 0.62rem; }
 
   .mobile-topbar {
     display: flex;
@@ -2948,29 +2934,41 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
     top: 70px;
   }
 
-  .daily-card {
-    display: none;
-  }
-
   /* Editorial preview (mobile only) — sits between the quick filters and the raw
      category list, so it's what the "editorial" snap height reveals first. */
-  .mobile-editorial-preview { display: block; padding: 0 24px; margin-top: 8px; }
+  .mobile-editorial-preview { margin-top: 8px; }
   .mobile-editorial-preview .myday-hint { width: 100%; margin: 0 0 4px; }
-  .med-daily {
-    display: flex; align-items: center; gap: 8px;
-    background: var(--text); color: var(--bg-card);
-    border-radius: var(--radius); padding: 9px 12px;
-    font-size: 0.74rem; margin-bottom: 14px;
-  }
-  .med-daily b { font-weight: 700; }
+  .med-daily { margin-bottom: 14px; }
   .med-stories { margin-bottom: 14px; }
-  .med-stories-row { display: flex; gap: 8px; margin-top: 8px; overflow-x: auto; }
+  .med-stories-row { display: flex; gap: 8px; margin-top: 8px; overflow-x: auto; scrollbar-width: none; }
+  .med-stories-row::-webkit-scrollbar { display: none; }
+  /* Landscape cover cards: the real photo with a dark fade under the title */
   .med-story {
-    flex: 0 0 30%; aspect-ratio: 3/4; border-radius: var(--radius);
+    flex: 0 0 42%; aspect-ratio: 4/3; border-radius: var(--radius);
     background: linear-gradient(160deg, var(--accent-salvia-deep) 0%, #4d5a4d 100%);
+    background-size: cover; background-position: center;
+    position: relative; overflow: hidden;
     display: flex; align-items: flex-end; padding: 7px; cursor: pointer;
   }
-  .med-story span { font-size: 0.62rem; color: #fff; font-weight: 700; line-height: 1.2; }
+  .med-story.has-cover::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,0.7));
+  }
+  .med-story span { position: relative; font-size: 0.68rem; color: #fff; font-weight: 700; line-height: 1.2; }
+
+  /* Detail sheet (pepita / quartiere): the actions row sticks to the bottom so it's never
+     below the fold. Events keep their three stacked buttons inline — sticky they'd cover
+     a third of the sheet. */
+  .detail-body { display: flex; flex-direction: column; }
+  .detail-body > .detail-meta { align-self: flex-start; }
+  .detail-panel.pepita-mode .detail-actions,
+  .detail-panel.quartiere-mode .detail-actions {
+    order: 99;
+    position: sticky; bottom: 0; z-index: 5;
+    margin: 0 -28px -40px;
+    padding: 10px 28px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: var(--bg-card); border-top: 1px solid var(--border);
+  }
 
   /* Bottom sheet: slides up from the bottom */
   .detail-panel {
@@ -3530,6 +3528,8 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
 
 /* Mood Matcher CTA reuses the "hint" style, just with a tinted dashed border so it
    reads as its own feature without breaking the app's otherwise restrained palette. */
-.mood-matcher-hint { border-color: var(--accent-rosa-deep); }
+.mood-matcher-hint { border-color: var(--accent-rosa-deep); padding: 7px 10px; }
+/* Under the quick filters it spans the search column, aligned with the daily strip below */
+.sidebar-search .mood-matcher-hint { width: 100%; margin: 10px 0 0; }
 .mood-matcher-hint:hover { background: var(--gray-light); border-color: var(--accent-rosa-deep); }
 
