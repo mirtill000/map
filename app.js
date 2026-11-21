@@ -156,6 +156,33 @@ const i18n = {
     openNow: 'Aperto ora',
     closedNow: 'Chiuso',
     statusOpenUntil: (c) => `Aperto · chiude alle ${c}`,
+    statusOpen24h: 'Aperto 24 ore su 24',
+    suggestCta: 'Conosci una pepita che manca? Suggeriscila',
+    suggestTitle: 'Suggerisci una pepita',
+    suggestIntro: 'Un posto speciale che non è ancora sulla mappa? Raccontacelo: ogni proposta viene letta e verificata prima di essere aggiunta.',
+    suggestNome: 'Nome del posto',
+    suggestQuartiere: 'Quartiere',
+    suggestQuartiereHint: 'Es. Isola, NoLo…',
+    suggestPerche: 'Perché è una pepita?',
+    suggestPercheHint: 'Cosa lo rende speciale, cosa ordinare, quando andarci…',
+    suggestLink: 'Link (Instagram o sito)',
+    suggestAutore: 'Il tuo nome',
+    suggestOptional: 'facoltativo',
+    suggestSubmit: "Prepara l'email",
+    suggestRequired: 'Scrivi almeno il nome del posto e perché è una pepita.',
+    suggestDoneTitle: 'Grazie!',
+    suggestDoneText: (m) => `Si è aperta la tua app di posta con la proposta già scritta: premi Invia per mandarla. Se non si è aperta, copia il testo e invialo a ${m}.`,
+    suggestCopy: 'Copia il testo',
+    suggestCopied: 'Copiato ✓',
+    suggestClose: 'Chiudi',
+    suggestFromSearch: "Non c'è? Suggeriscila",
+    searchEverywhere: (q) => `Cerca "${q}" ovunque`,
+    searchEverywhereN: (q, n) => `Cerca "${q}" ovunque · ${n} ${n === 1 ? 'risultato' : 'risultati'}`,
+    noUpcomingTitle: 'Nessun evento in arrivo',
+    noUpcomingText: 'Il calendario si sta aggiornando: torna presto. Intanto, scopri le pepite di Milano.',
+    noUpcomingTextSince: (d) => `Gli ultimi eventi in calendario si sono chiusi il ${d}. Il calendario si sta aggiornando: torna presto.`,
+    noUpcomingCta: 'Scopri le pepite',
+    open24h: 'Aperto 24 ore',
     statusOpensAt: (o) => `Chiuso · apre alle ${o}`,
     statusOpensTomorrow: (o) => `Chiuso · apre domani alle ${o}`,
     statusOpensDay: (d, o) => `Chiuso · apre ${d} alle ${o}`,
@@ -365,6 +392,33 @@ const i18n = {
     openNow: 'Open now',
     closedNow: 'Closed',
     statusOpenUntil: (c) => `Open · closes at ${c}`,
+    statusOpen24h: 'Open 24 hours',
+    suggestCta: 'Know a gem we are missing? Suggest it',
+    suggestTitle: 'Suggest a gem',
+    suggestIntro: "A special place that isn't on the map yet? Tell us about it: every suggestion is read and checked before it's added.",
+    suggestNome: 'Name of the place',
+    suggestQuartiere: 'Neighbourhood',
+    suggestQuartiereHint: 'E.g. Isola, NoLo…',
+    suggestPerche: 'Why is it a gem?',
+    suggestPercheHint: 'What makes it special, what to order, when to go…',
+    suggestLink: 'Link (Instagram or website)',
+    suggestAutore: 'Your name',
+    suggestOptional: 'optional',
+    suggestSubmit: 'Prepare the email',
+    suggestRequired: "Please write at least the place's name and why it's a gem.",
+    suggestDoneTitle: 'Thank you!',
+    suggestDoneText: (m) => `Your mail app has opened with the suggestion already written: press Send to send it. If it didn't open, copy the text and send it to ${m}.`,
+    suggestCopy: 'Copy the text',
+    suggestCopied: 'Copied ✓',
+    suggestClose: 'Close',
+    suggestFromSearch: 'Not here? Suggest it',
+    searchEverywhere: (q) => `Search "${q}" everywhere`,
+    searchEverywhereN: (q, n) => `Search "${q}" everywhere · ${n} ${n === 1 ? 'result' : 'results'}`,
+    noUpcomingTitle: 'No upcoming events',
+    noUpcomingText: "The calendar is being updated: check back soon. Meanwhile, explore Milan's gems.",
+    noUpcomingTextSince: (d) => `The last events in the calendar ended on ${d}. The calendar is being updated: check back soon.`,
+    noUpcomingCta: 'Explore the gems',
+    open24h: 'Open 24 hours',
     statusOpensAt: (o) => `Closed · opens at ${o}`,
     statusOpensTomorrow: (o) => `Closed · opens tomorrow at ${o}`,
     statusOpensDay: (d, o) => `Closed · opens ${d} at ${o}`,
@@ -655,6 +709,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupMoodMatcher();
   setupStoryViewer();
   setupGlobalSearch();
+  setupSuggestPepita();
   setupMyDayPlan();
   setupOnboarding();
 
@@ -921,6 +976,8 @@ function applyLanguage() {
     const key = 'tab' + tab.dataset.tab.charAt(0).toUpperCase() + tab.dataset.tab.slice(1);
     tab.textContent = t(key);
   });
+  const suggestCtaText = document.getElementById('suggestPepitaCtaText');
+  if (suggestCtaText) suggestCtaText.textContent = t('suggestCta');
   // Category row has no visible heading (single scrolling row) — keep it labelled for AT
   document.getElementById('catNav')?.setAttribute('aria-label', t('catLabel'));
   // Category names
@@ -1166,8 +1223,13 @@ function renderPepiteList() {
         <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
         <h4>${msg}</h4>
         <p>${sub}</p>
-        <button class="empty-reset-btn">${isEn ? 'Reset filters' : 'Rimuovi filtri'}</button>
+        <div class="empty-actions">
+          ${query ? _searchEverywhereBtn(query) : ''}
+          <button class="empty-reset-btn">${isEn ? 'Reset filters' : 'Rimuovi filtri'}</button>
+          ${query && SUGGEST_EMAIL ? `<button type="button" class="empty-suggest-btn" data-nome="${queryEsc}">💡 ${escapeHtml(t('suggestFromSearch'))}</button>` : ''}
+        </div>
       </div>`;
+    _wireEmptyStateActions(list);
     list.querySelector('.empty-reset-btn').addEventListener('click', () => {
       currentFilter = 'all';
       filterOpenNow = false;
@@ -2312,7 +2374,9 @@ function renderDetailHours(week) {
     t('dayShort').map((d, i) => {
       const slots = week[i + 1];
       const txt = slots.length
-        ? slots.map(([o, c]) => `${o}–${c}`).join(', ')
+        ? slots.map(s => _isAllDaySlot(s)
+            ? escapeHtml(t('open24h'))
+            : `${s[0]}–${s[1]}${s[2] ? ` <span class="note">(${escapeHtml(s[2])})</span>` : ''}`).join(', ')
         : `<span class="closed">${escapeHtml(t('closedNow'))}</span>`;
       return `<div class="detail-hours-row${i + 1 === today ? ' today' : ''}"><span class="d">${escapeHtml(d)}</span><span>${txt}</span></div>`;
     }).join('');
@@ -3374,6 +3438,22 @@ function isEventPast(e) {
   return d < today;
 }
 
+// Empty state for when every event in eventi.json is over: when the last one ended,
+// and a way back to the pepite (which never expire).
+function _noUpcomingEventsHTML() {
+  const last = eventi.map(parseEventDate).filter(Boolean).sort((a, b) => b - a)[0];
+  const lastStr = last
+    ? last.toLocaleDateString(currentLang === 'en' ? 'en-GB' : 'it-IT', { day: 'numeric', month: 'long', year: 'numeric' })
+    : '';
+  return `
+    <div class="pepite-list-empty eventi-none-upcoming">
+      <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <h4>${escapeHtml(t('noUpcomingTitle'))}</h4>
+      <p>${escapeHtml(lastStr ? t('noUpcomingTextSince', lastStr) : t('noUpcomingText'))}</p>
+      <button class="empty-reset-btn">${escapeHtml(t('noUpcomingCta'))}</button>
+    </div>`;
+}
+
 // ── Group events: same title + same location across different days → one card ──
 function groupEventi(list) {
   const groups = new Map();
@@ -3616,6 +3696,16 @@ function renderEventi() {
   const eventiMyDayHint = document.getElementById('eventiMyDayHint');
   if (eventiMyDayHint) eventiMyDayHint.style.display = (currentEventFilter === 'fav' && _evAllItems.length > 0) ? 'flex' : 'none';
 
+  // Nothing upcoming at all (the calendar has run out): say so plainly instead of
+  // suggesting to remove filters that wouldn't bring anything back.
+  if (_evAllItems.length === 0 && eventiLoaded && !eventi.some(e => e.salvato || !isEventPast(e))) {
+    container.innerHTML = _noUpcomingEventsHTML();
+    container.querySelector('.empty-reset-btn')?.addEventListener('click', () => {
+      document.querySelector('.sidebar-tab[data-tab="pepite"]')?.click();
+    });
+    return;
+  }
+
   if (_evAllItems.length === 0) {
     const query    = document.getElementById('eventiSearchInput')?.value.trim() || '';
     const queryEsc = escapeHtml(query);
@@ -3643,8 +3733,12 @@ function renderEventi() {
         <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         <h4>${msg}</h4>
         <p>${sub}</p>
-        <button class="empty-reset-btn">${isEn ? 'Reset filters' : 'Rimuovi filtri'}</button>
+        <div class="empty-actions">
+          ${query ? _searchEverywhereBtn(query) : ''}
+          <button class="empty-reset-btn">${isEn ? 'Reset filters' : 'Rimuovi filtri'}</button>
+        </div>
       </div>`;
+    _wireEmptyStateActions(container);
     container.querySelector('.empty-reset-btn').addEventListener('click', () => {
       currentEventFilter  = 'all';
       currentDateFilter   = null;
@@ -4485,11 +4579,154 @@ function setupStoryViewer() {
 }
 
 
+// ── Suggerisci una pepita ──
+// The app has no backend, so a suggestion is composed as an email to SUGGEST_EMAIL in the
+// visitor's own mail app (mailto:). The address is public in this file. While it's empty
+// the whole feature stays hidden: the CTA under the Pepite list, and the "Suggeriscila"
+// buttons in the Pepite and global-search no-results states.
+const SUGGEST_EMAIL = '';
+
+let _suggestOpener = null; // element to give focus back to on close
+
+function setupSuggestPepita() {
+  const cta = document.getElementById('suggestPepitaCta');
+  if (cta) {
+    cta.style.display = SUGGEST_EMAIL ? 'flex' : 'none';
+    cta.addEventListener('click', () => openSuggestPepita());
+  }
+  const overlay = document.getElementById('suggestOverlay');
+  if (!overlay) return;
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeSuggestPepita(); });
+  document.addEventListener('keydown', e => {
+    if (overlay.style.display === 'none') return;
+    if (e.key === 'Escape') closeSuggestPepita();
+    else if (e.key === 'Tab') _trapFocus(e, overlay);
+  });
+}
+
+// Keeps Tab / Shift+Tab cycling inside a modal overlay.
+function _trapFocus(e, root) {
+  const items = [...root.querySelectorAll('button, input, textarea, select, a[href]')]
+    .filter(el => !el.disabled && el.offsetParent !== null);
+  if (!items.length) return;
+  const first = items[0], last = items[items.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+}
+
+const _closeIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
+
+function openSuggestPepita(prefill = {}) {
+  if (!SUGGEST_EMAIL) return;
+  const overlay = document.getElementById('suggestOverlay');
+  const panel   = document.getElementById('suggestPanel');
+  if (!overlay || !panel) return;
+  _suggestOpener = document.activeElement;
+
+  const quartieri = [...new Set(pepite.map(p => p.quartiere).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'it'));
+  const opt = `<span class="suggest-optional">(${escapeHtml(t('suggestOptional'))})</span>`;
+  panel.innerHTML = `
+    <div class="suggest-head">
+      <h3 id="suggestTitle">💡 ${escapeHtml(t('suggestTitle'))}</h3>
+      <button type="button" class="global-search-close" id="suggestClose" aria-label="${escapeHtml(t('suggestClose'))}">${_closeIcon}</button>
+    </div>
+    <form class="suggest-form" id="suggestForm" novalidate>
+      <p class="suggest-intro">${escapeHtml(t('suggestIntro'))}</p>
+      <label class="suggest-field"><span>${escapeHtml(t('suggestNome'))} *</span>
+        <input name="nome" maxlength="120" autocomplete="off" required></label>
+      <label class="suggest-field"><span>${escapeHtml(t('suggestQuartiere'))}</span>
+        <input name="quartiere" maxlength="60" list="suggestQuartieri" autocomplete="off" placeholder="${escapeHtml(t('suggestQuartiereHint'))}"></label>
+      <datalist id="suggestQuartieri">${quartieri.map(q => `<option value="${escapeHtml(q)}">`).join('')}</datalist>
+      <label class="suggest-field"><span>${escapeHtml(t('suggestPerche'))} *</span>
+        <textarea name="perche" rows="4" maxlength="1500" required placeholder="${escapeHtml(t('suggestPercheHint'))}"></textarea></label>
+      <label class="suggest-field"><span>${escapeHtml(t('suggestLink'))} ${opt}</span>
+        <input name="link" maxlength="300" inputmode="url" autocomplete="off" placeholder="instagram.com/…"></label>
+      <label class="suggest-field"><span>${escapeHtml(t('suggestAutore'))} ${opt}</span>
+        <input name="autore" maxlength="80" autocomplete="name"></label>
+      <p class="suggest-error" id="suggestError" role="alert" hidden></p>
+      <button type="submit" class="btn-action btn-main">${escapeHtml(t('suggestSubmit'))}</button>
+    </form>`;
+
+  const form = panel.querySelector('#suggestForm');
+  form.elements.nome.value = prefill.nome || '';
+  form.addEventListener('input', () => { panel.querySelector('#suggestError').hidden = true; });
+  panel.querySelector('#suggestClose').addEventListener('click', closeSuggestPepita);
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const v = name => form.elements[name].value.trim();
+    const missing = !v('nome') ? 'nome' : !v('perche') ? 'perche' : null;
+    if (missing) {
+      const err = panel.querySelector('#suggestError');
+      err.textContent = t('suggestRequired');
+      err.hidden = false;
+      form.elements[missing].focus();
+      return;
+    }
+    const subject = `Nuova pepita: ${v('nome')}`;
+    // Labels in Italian whatever the UI language: the email is read by the curator
+    const line = (label, name) => (v(name) ? [`${label}: ${v(name)}`] : []);
+    const body = [
+      ...line('Nome', 'nome'),
+      ...line('Quartiere', 'quartiere'),
+      '',
+      'Perché è una pepita:',
+      v('perche'),
+      '',
+      ...line('Link', 'link'),
+      ...line('Segnalata da', 'autore'),
+      `(inviata dall'app, lingua ${currentLang.toUpperCase()})`
+    ].join('\n');
+    window.location.href = `mailto:${SUGGEST_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    _renderSuggestDone(panel, `${subject}\n\n${body}`);
+  });
+
+  overlay.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => (prefill.nome ? form.elements.quartiere : form.elements.nome).focus(), 50);
+}
+
+// After the mail app has been opened: thanks + a copy-the-text fallback for visitors
+// without a configured mail client.
+function _renderSuggestDone(panel, text) {
+  panel.innerHTML = `
+    <div class="suggest-head">
+      <h3 id="suggestTitle">${escapeHtml(t('suggestDoneTitle'))}</h3>
+      <button type="button" class="global-search-close" id="suggestClose" aria-label="${escapeHtml(t('suggestClose'))}">${_closeIcon}</button>
+    </div>
+    <div class="suggest-form">
+      <p class="suggest-intro">${escapeHtml(t('suggestDoneText', SUGGEST_EMAIL))}</p>
+      <div class="suggest-done-actions">
+        <button type="button" class="btn-action btn-secondary" id="suggestCopy">${escapeHtml(t('suggestCopy'))}</button>
+        <button type="button" class="btn-action btn-main" id="suggestDoneClose">${escapeHtml(t('suggestClose'))}</button>
+      </div>
+    </div>`;
+  panel.querySelector('#suggestClose').addEventListener('click', closeSuggestPepita);
+  panel.querySelector('#suggestDoneClose').addEventListener('click', closeSuggestPepita);
+  const copyBtn = panel.querySelector('#suggestCopy');
+  copyBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      copyBtn.textContent = t('suggestCopied');
+    } catch (e) { /* clipboard blocked — the email address is in the text above */ }
+  });
+  panel.querySelector('#suggestDoneClose').focus();
+}
+
+function closeSuggestPepita() {
+  const overlay = document.getElementById('suggestOverlay');
+  if (!overlay || overlay.style.display === 'none') return;
+  overlay.style.display = 'none';
+  document.body.style.overflow = '';
+  if (_suggestOpener && document.contains(_suggestOpener)) _suggestOpener.focus();
+  _suggestOpener = null;
+}
+
 // ── Global Cross-Domain Search (pepite + eventi + itinerari + storie) ──
-function openGlobalSearch() {
+function openGlobalSearch(prefill) {
   const overlay = document.getElementById('globalSearchOverlay');
   const input   = document.getElementById('globalSearchInput');
   if (!overlay || !input) return;
+  if (typeof prefill === 'string') input.value = prefill;
   overlay.style.display = 'flex';
   document.body.style.overflow = 'hidden';
   renderGlobalSearchResults(input.value);
@@ -4553,43 +4790,81 @@ function _gsMatch(haystack, query) {
   return !!haystack && normalizeSearch(haystack).includes(query);
 }
 
+// Everything the global search finds for a query, per group (unsliced). Shared by the
+// overlay and the "Cerca ovunque" button in the tabs' empty states, so the count it
+// shows is the one the overlay will list.
+function _globalSearchMatches(rawQuery) {
+  const query = normalizeSearch((rawQuery || '').trim());
+  const isEn  = currentLang === 'en';
+  if (query.length < 2) return null;
+  return {
+    pepite: pepite.filter(p =>
+      _gsMatch(p.nome, query) || _gsMatch(p.quartiere, query) || _gsMatch(getCat(p), query)),
+    eventi: eventi.filter(e => {
+      const titolo = isEn ? (e.titolo_en || e.titolo) : e.titolo;
+      const tag    = isEn ? (e.tag_en || e.tag) : e.tag;
+      return _gsMatch(titolo, query) || _gsMatch(e.quartiere, query) || _gsMatch(tag, query);
+    }),
+    itinerari: itinerariData.filter(it =>
+      _gsMatch(t(it.titoloKey), query) || _gsMatch(t(it.subKey), query)),
+    storie: storieData.filter(s => {
+      const title = s.title?.[currentLang] || s.title?.it || '';
+      const sub   = s.sub?.[currentLang]   || s.sub?.it   || '';
+      return _gsMatch(title, query) || _gsMatch(sub, query);
+    })
+  };
+}
+
+// "Cerca ovunque" button for a tab's no-results state: opens the global search pre-filled.
+// Shows how many results it will find; hidden when there are none and every dataset is
+// loaded (if storie/eventi aren't loaded yet the overlay loads them, so offer it anyway).
+function _searchEverywhereBtn(query) {
+  const m = _globalSearchMatches(query);
+  if (!m) return '';
+  const n = m.pepite.length + m.eventi.length + m.itinerari.length + m.storie.length;
+  if (n === 0 && eventiLoaded && storieLoaded) return '';
+  return `<button type="button" class="empty-search-everywhere-btn" data-query="${escapeHtml(query)}">
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    ${escapeHtml(n ? t('searchEverywhereN', query, n) : t('searchEverywhere', query))}
+  </button>`;
+}
+
+function _wireEmptyStateActions(container) {
+  container.querySelector('.empty-search-everywhere-btn')?.addEventListener('click', e => {
+    openGlobalSearch(e.currentTarget.dataset.query);
+  });
+  container.querySelector('.empty-suggest-btn')?.addEventListener('click', e => {
+    openSuggestPepita({ nome: e.currentTarget.dataset.nome || '' });
+  });
+}
+
 function renderGlobalSearchResults(rawQuery) {
   const container = document.getElementById('globalSearchResults');
   if (!container) return;
-  const query = normalizeSearch(rawQuery.trim());
   const isEn  = currentLang === 'en';
+  const matches = _globalSearchMatches(rawQuery);
 
-  if (query.length < 2) {
+  if (!matches) {
     container.innerHTML = `<div class="gs-empty">${isEn ? 'Type at least 2 characters to search everywhere.' : 'Scrivi almeno 2 caratteri per cercare ovunque.'}</div>`;
     return;
   }
 
   const MAX_PER_GROUP = 5;
-
-  const pepiteResults = pepite.filter(p =>
-    _gsMatch(p.nome, query) || _gsMatch(p.quartiere, query) || _gsMatch(getCat(p), query)
-  ).slice(0, MAX_PER_GROUP);
-
-  const eventiResults = eventi.filter(e => {
-    const titolo = isEn ? (e.titolo_en || e.titolo) : e.titolo;
-    const tag    = isEn ? (e.tag_en || e.tag) : e.tag;
-    return _gsMatch(titolo, query) || _gsMatch(e.quartiere, query) || _gsMatch(tag, query);
-  }).slice(0, MAX_PER_GROUP);
-
-  const itinerariResults = itinerariData.filter(it =>
-    _gsMatch(t(it.titoloKey), query) || _gsMatch(t(it.subKey), query)
-  ).slice(0, MAX_PER_GROUP);
-
-  const storieResults = storieData.filter(s => {
-    const title = s.title?.[currentLang] || s.title?.it || '';
-    const sub   = s.sub?.[currentLang]   || s.sub?.it   || '';
-    return _gsMatch(title, query) || _gsMatch(sub, query);
-  }).slice(0, MAX_PER_GROUP);
+  const pepiteResults    = matches.pepite.slice(0, MAX_PER_GROUP);
+  const eventiResults    = matches.eventi.slice(0, MAX_PER_GROUP);
+  const itinerariResults = matches.itinerari.slice(0, MAX_PER_GROUP);
+  const storieResults    = matches.storie.slice(0, MAX_PER_GROUP);
 
   const totalCount = pepiteResults.length + eventiResults.length + itinerariResults.length + storieResults.length;
 
   if (totalCount === 0) {
-    container.innerHTML = `<div class="gs-empty">${isEn ? `No results for "${escapeHtml(rawQuery.trim())}"` : `Nessun risultato per "${escapeHtml(rawQuery.trim())}"`}</div>`;
+    const q = rawQuery.trim();
+    container.innerHTML = `<div class="gs-empty">${isEn ? `No results for "${escapeHtml(q)}"` : `Nessun risultato per "${escapeHtml(q)}"`}
+      ${SUGGEST_EMAIL ? `<button type="button" class="empty-suggest-btn" data-nome="${escapeHtml(q)}">💡 ${escapeHtml(t('suggestFromSearch'))}</button>` : ''}</div>`;
+    container.querySelector('.empty-suggest-btn')?.addEventListener('click', () => {
+      closeGlobalSearch();
+      openSuggestPepita({ nome: q });
+    });
     return;
   }
 
@@ -5061,18 +5336,23 @@ function parseOrariWeek(orari) {
     // "Mer-Dom 12:30–14:30", "Lun 09:00-18:00" or "Ven,Sab 18:30–01:00" — data uses an en
     // dash (–) between times (a plain hyphen also appears in a few entries, so accept both)
     // and commas without a space to list non-contiguous days sharing one time range.
-    const full  = seg.match(/^([A-Za-z,-]+)\s+(\d{1,2}:\d{2})[-–](\d{1,2}:\d{2})$/);
+    // An optional trailing note in brackets is kept with the slot: "07:00-11:00 (Colazione)".
+    const full  = seg.match(/^([A-Za-z,-]+)\s+(\d{1,2}:\d{2})[-–](\d{1,2}:\d{2})(?:\s*\(([^)]*)\))?$/);
     // "19:30–22:30"  (inherits last day range)
-    const tOnly = seg.match(/^(\d{1,2}:\d{2})[-–](\d{1,2}:\d{2})$/);
+    const tOnly = seg.match(/^(\d{1,2}:\d{2})[-–](\d{1,2}:\d{2})(?:\s*\(([^)]*)\))?$/);
+    // "Lun-Dom Aperto 24 ore su 24" / "Sab 24h" — stored as a 00:00–24:00 slot
+    const allDay = seg.match(/^([A-Za-z,-]+)\s+(?:aperto\s+)?24\s*(?:ore|h)(?:\s+su\s+24)?$/i);
+    const slot = (o, c, note) => (note ? [o, c, note.trim()] : [o, c]);
 
-    if (full) {
+    if (full || allDay) {
       // A later day group overrides an earlier, broader one for the days it names
       // ("Lun-Dom 18:00–01:00, Ven,Sab 18:00–02:00" = Fri/Sat until 02:00, not both slots)
-      lastDays = parseDays(full[1]);
-      lastDays.forEach(d => { week[d] = [[full[2], full[3]]]; });
+      lastDays = parseDays((full || allDay)[1]);
+      const s = full ? slot(full[2], full[3], full[4]) : ['00:00', '24:00'];
+      lastDays.forEach(d => { week[d] = [s]; });
       if (lastDays.length) recognised = true;
     } else if (tOnly && lastDays) {
-      lastDays.forEach(d => week[d].push([tOnly[1], tOnly[2]]));
+      lastDays.forEach(d => week[d].push(slot(tOnly[1], tOnly[2], tOnly[3])));
     }
   }
   if (!recognised) return null;
@@ -5080,6 +5360,8 @@ function parseOrariWeek(orari) {
   for (let d = 1; d <= 7; d++) week[d].sort((a, b) => _orariMins(a[0]) - _orariMins(b[0]));
   return week;
 }
+
+function _isAllDaySlot([o, c]) { return o === '00:00' && c === '24:00'; }
 
 // Live status line for the detail panel: "Aperto · chiude alle 23:00",
 // "Chiuso · apre alle 19:00" / "… domani alle …" / "… giovedì alle …". null if unknown.
@@ -5089,6 +5371,7 @@ function getOpenStatus(p, now = new Date()) {
   const today = now.getDay() || 7;
   const cur   = now.getHours() * 60 + now.getMinutes();
   const openSlot = _openSlotAt(week, now);
+  if (openSlot && _isAllDaySlot(openSlot)) return { open: true, label: t('statusOpen24h') };
   if (openSlot) return { open: true, label: t('statusOpenUntil', openSlot[1]) };
   const later = week[today].find(([o]) => _orariMins(o) > cur);
   if (later) return { open: false, label: t('statusOpensAt', later[0]) };
