@@ -4586,9 +4586,9 @@ function setupStoryViewer() {
 
 
 // ── Suggerisci una pepita ──
-// The form is sent as JSON to backend/suggest_pepita.py (see backend/README.md), which
-// emails it to the curator over SMTP. SUGGEST_ENDPOINT is that script's URL — relative
-// to the app (e.g. 'backend/suggest_pepita.py') or absolute. While it's empty the whole
+// The form is sent as JSON to backend/suggest_pepita.php (see backend/README.md), which
+// emails it to the curator (PHP mail() or SMTP). SUGGEST_ENDPOINT is that script's URL — relative
+// to the app (e.g. 'backend/suggest_pepita.php') or absolute. While it's empty the whole
 // feature stays hidden: the CTA under the Pepite list, and the "Suggeriscila" buttons in
 // the Pepite and global-search no-results states.
 const SUGGEST_ENDPOINT = '';

@@ -1,0 +1,6 @@
+# Only suggest_pepita.php is meant to be reached from the web: block the config (it
+# holds the SMTP password), its example, the tests and the docs.
+<FilesMatch "^(config(\.example)?\.php|README\.md)$">
+  Require all denied
+</FilesMatch>
+RedirectMatch 403 /tests/
