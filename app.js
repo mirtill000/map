@@ -1232,7 +1232,7 @@ function refreshActiveMarker(newPepita) {
 // CARTO basemap. Paste your CARTO API key here (leave '' to use the plain public URL).
 // This is a static site, so the key is visible to anyone who opens the source — restrict
 // it to your domain(s) from the CARTO dashboard.
-const CARTO_API_KEY = '';
+const CARTO_API_KEY = 'cb1_5dj8_1_771dd181f08acf4a8ce2b392';
 // If CARTO's docs specify a different URL shape or parameter name for your key, change it
 // here — `{apiKey}` is replaced by CARTO_API_KEY (it's passed to L.tileLayer as an option).
 const CARTO_TILE_URL = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
