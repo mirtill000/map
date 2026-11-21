@@ -1229,11 +1229,21 @@ function refreshActiveMarker(newPepita) {
 }
 
 // ── Leaflet Map ──
+// CARTO basemap. Paste your CARTO API key here (leave '' to use the plain public URL).
+// This is a static site, so the key is visible to anyone who opens the source — restrict
+// it to your domain(s) from the CARTO dashboard.
+const CARTO_API_KEY = '';
+// If CARTO's docs specify a different URL shape or parameter name for your key, change it
+// here — `{apiKey}` is replaced by CARTO_API_KEY (it's passed to L.tileLayer as an option).
+const CARTO_TILE_URL = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+const CARTO_TILE_URL_KEYED = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png?api_key={apiKey}';
+
 function initMap() {
   map = L.map('map', { zoomControl: false }).setView([45.4642, 9.1900], 13);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  L.tileLayer(CARTO_API_KEY ? CARTO_TILE_URL_KEYED : CARTO_TILE_URL, {
     attribution: '&copy; OpenStreetMap &copy; CARTO',
-    maxZoom: 19
+    maxZoom: 19,
+    apiKey: CARTO_API_KEY
   }).addTo(map);
 
   renderMarkers();
