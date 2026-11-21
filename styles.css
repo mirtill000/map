@@ -588,6 +588,28 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
   transition: all var(--transition);
 }
 .empty-reset-btn:hover { background: var(--text); color: var(--bg-card); }
+.empty-actions { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+/* "Cerca ovunque" is the most useful way out of an empty search, so it's the filled one */
+.empty-search-everywhere-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 18px; border-radius: 20px;
+  background: var(--text); color: var(--bg-card); border: 1.5px solid var(--text);
+  font-size: 0.78rem; font-weight: 600; cursor: pointer; max-width: 100%;
+  transition: opacity var(--transition);
+}
+.empty-search-everywhere-btn:hover { opacity: 0.85; }
+.pepite-list-empty .empty-search-everywhere-btn svg { width: 14px; height: 14px; opacity: 1; margin: 0; flex-shrink: 0; }
+.empty-suggest-btn {
+  background: none; border: none; padding: 6px 8px; cursor: pointer;
+  color: var(--text-light); font-size: 0.76rem; font-weight: 600;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.empty-suggest-btn:hover { color: var(--text); }
+.gs-empty .empty-suggest-btn { display: block; margin: 10px auto 0; }
+.eventi-none-upcoming p { max-width: 280px; line-height: 1.5; }
+
+/* "Suggerisci una pepita" CTA under the Pepite list */
+.suggest-cta { margin-top: 16px; margin-bottom: 24px; }
 
 
 /* ════════════════════════════════════════
@@ -1503,6 +1525,7 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
 .detail-hours-row.today { color: var(--text); font-weight: 700; }
 .detail-hours-row.today .d::after { content: ' •'; color: var(--accent-rosa-deep); }
 .detail-hours-row .closed { color: var(--text-muted); font-style: italic; font-weight: 400; }
+.detail-hours-row .note { color: var(--text-muted); font-weight: 400; }
 
 .btn-action {
   width: 100%;
@@ -3194,6 +3217,37 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
   color: var(--text-muted);
   font-size: 0.85rem;
 }
+
+/* ── Suggerisci una pepita (reuses the global-search overlay/panel shell) ── */
+.suggest-panel { max-width: 480px; overflow-y: auto; }
+.suggest-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 16px 18px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.suggest-head h3 { font-family: var(--font-serif); font-size: 1.3rem; font-weight: 400; }
+.suggest-form { display: flex; flex-direction: column; gap: 14px; padding: 18px; }
+.suggest-intro { font-size: 0.84rem; line-height: 1.55; color: var(--text-light); }
+.suggest-field { display: flex; flex-direction: column; gap: 6px; }
+.suggest-field > span {
+  font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--text-muted); font-weight: 600;
+}
+.suggest-optional { text-transform: none; letter-spacing: 0; font-weight: 400; }
+.suggest-field input,
+.suggest-field textarea {
+  width: 100%; border: 1px solid var(--border); border-radius: 2px;
+  background: var(--bg); color: var(--text);
+  font-family: var(--font-sans); font-size: 0.9rem; padding: 10px 12px;
+}
+.suggest-field textarea { resize: vertical; min-height: 96px; line-height: 1.5; }
+.suggest-field input:focus,
+.suggest-field textarea:focus { outline: none; border-color: var(--text); background: var(--bg-card); }
+.suggest-error { font-size: 0.8rem; color: #a33a32; }
+.suggest-form button[type=submit]:disabled { opacity: 0.6; cursor: progress; }
+/* Honeypot field: out of sight and out of the tab order */
+.suggest-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.suggest-done-actions { display: flex; gap: 8px; }
+.suggest-done-actions .btn-action { flex: 1; }
 
 @media (max-width: 640px) {
   .global-search-overlay { padding: 0; }

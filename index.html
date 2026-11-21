@@ -33,7 +33,7 @@
         integrity="sha512-mQ77VzAakzdpWdgfL/lM1ksNy89uFgibRQANsNneSTMD/bj0Y/8+94XMwYhnbzx8eki2hrbPpDm0vD0CiT2lcg==" crossorigin="anonymous" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css"
         integrity="sha512-6ZCLMiYwTeli2rVh3XAPxy3YoR5fVxGdH/pz+KMCzRY2M65Emgkw00Yqmhh8qLGeYQ3LbVZGdmOX9KUjSKr0TA==" crossorigin="anonymous" />
-  <link rel="stylesheet" href="styles.css?v=30">
+  <link rel="stylesheet" href="styles.css?v=32">
 
   <title>Mappa - Pepite per Tutti</title>
   
@@ -228,6 +228,11 @@
               <span id="pepiteMyDayHintText">Componi un itinerario con i tuoi preferiti → La mia giornata</span>
             </button>
             <div class="pepite-list" id="pepiteList"></div>
+            <!-- "Suggerisci una pepita" — shown only when SUGGEST_EMAIL is set in app.js -->
+            <button class="myday-hint suggest-cta" id="suggestPepitaCta" style="display:none">
+              <span class="myday-hint-icon">💡</span>
+              <span id="suggestPepitaCtaText">Conosci una pepita che manca? Suggeriscila</span>
+            </button>
           </div>
         </div>
       </div>
@@ -489,6 +494,11 @@
     </div>
   </div>
 
+  <!-- ═══ SUGGERISCI UNA PEPITA (content rendered by openSuggestPepita) ═══ -->
+  <div class="global-search-overlay suggest-overlay" id="suggestOverlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="suggestTitle">
+    <div class="global-search-panel suggest-panel" id="suggestPanel"></div>
+  </div>
+
   <!-- ═══ MY DAY PLAN OVERLAY ═══ -->
   <div class="myday-overlay" id="myDayOverlay" style="display:none" aria-modal="true" role="dialog">
     <div class="myday-panel">
@@ -526,6 +536,6 @@
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"
           integrity="sha512-OFs3W4DIZ5ZkrDhBFtsCP6JXtMEDGmhl0QPlmWYBJay40TT1n3gt2Xuw8Pf/iezgW9CdabjkNChRqozl/YADmg==" crossorigin="anonymous"></script>
-  <script src="app.js?v=97"></script>
+  <script src="app.js?v=99"></script>
 </body>
 </html>
