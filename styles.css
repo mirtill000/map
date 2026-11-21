@@ -3243,6 +3243,9 @@ h1, h2, h3, h4 { font-family: var(--font-serif); font-weight: 400; line-height: 
 .suggest-field input:focus,
 .suggest-field textarea:focus { outline: none; border-color: var(--text); background: var(--bg-card); }
 .suggest-error { font-size: 0.8rem; color: #a33a32; }
+.suggest-form button[type=submit]:disabled { opacity: 0.6; cursor: progress; }
+/* Honeypot field: out of sight and out of the tab order */
+.suggest-hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 .suggest-done-actions { display: flex; gap: 8px; }
 .suggest-done-actions .btn-action { flex: 1; }
 

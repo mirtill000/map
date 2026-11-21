@@ -168,12 +168,15 @@ const i18n = {
     suggestLink: 'Link (Instagram o sito)',
     suggestAutore: 'Il tuo nome',
     suggestOptional: 'facoltativo',
-    suggestSubmit: "Prepara l'email",
+    suggestSubmit: 'Invia la proposta',
+    suggestSending: 'Invio in corso…',
     suggestRequired: 'Scrivi almeno il nome del posto e perché è una pepita.',
     suggestDoneTitle: 'Grazie!',
-    suggestDoneText: (m) => `Si è aperta la tua app di posta con la proposta già scritta: premi Invia per mandarla. Se non si è aperta, copia il testo e invialo a ${m}.`,
-    suggestCopy: 'Copia il testo',
-    suggestCopied: 'Copiato ✓',
+    suggestDoneText: 'La tua proposta è arrivata: la leggeremo con cura e, se è una pepita, presto la troverai sulla mappa.',
+    suggestAnother: "Suggeriscine un'altra",
+    suggestErrOffline: 'Sei offline: riprova quando torni in rete.',
+    suggestErrRate: 'Hai già inviato diverse proposte: riprova tra un po’.',
+    suggestErrGeneric: 'Non è stato possibile inviare la proposta. Riprova tra qualche minuto.',
     suggestClose: 'Chiudi',
     suggestFromSearch: "Non c'è? Suggeriscila",
     searchEverywhere: (q) => `Cerca "${q}" ovunque`,
@@ -404,12 +407,15 @@ const i18n = {
     suggestLink: 'Link (Instagram or website)',
     suggestAutore: 'Your name',
     suggestOptional: 'optional',
-    suggestSubmit: 'Prepare the email',
+    suggestSubmit: 'Send suggestion',
+    suggestSending: 'Sending…',
     suggestRequired: "Please write at least the place's name and why it's a gem.",
     suggestDoneTitle: 'Thank you!',
-    suggestDoneText: (m) => `Your mail app has opened with the suggestion already written: press Send to send it. If it didn't open, copy the text and send it to ${m}.`,
-    suggestCopy: 'Copy the text',
-    suggestCopied: 'Copied ✓',
+    suggestDoneText: "Your suggestion has arrived: we'll read it carefully and, if it's a gem, you'll find it on the map soon.",
+    suggestAnother: 'Suggest another one',
+    suggestErrOffline: "You're offline: try again when you're back online.",
+    suggestErrRate: "You've already sent several suggestions: please try again later.",
+    suggestErrGeneric: "The suggestion couldn't be sent. Please try again in a few minutes.",
     suggestClose: 'Close',
     suggestFromSearch: 'Not here? Suggest it',
     searchEverywhere: (q) => `Search "${q}" everywhere`,
@@ -1226,7 +1232,7 @@ function renderPepiteList() {
         <div class="empty-actions">
           ${query ? _searchEverywhereBtn(query) : ''}
           <button class="empty-reset-btn">${isEn ? 'Reset filters' : 'Rimuovi filtri'}</button>
-          ${query && SUGGEST_EMAIL ? `<button type="button" class="empty-suggest-btn" data-nome="${queryEsc}">💡 ${escapeHtml(t('suggestFromSearch'))}</button>` : ''}
+          ${query && SUGGEST_ENDPOINT ? `<button type="button" class="empty-suggest-btn" data-nome="${queryEsc}">💡 ${escapeHtml(t('suggestFromSearch'))}</button>` : ''}
         </div>
       </div>`;
     _wireEmptyStateActions(list);
@@ -4580,18 +4586,19 @@ function setupStoryViewer() {
 
 
 // ── Suggerisci una pepita ──
-// The app has no backend, so a suggestion is composed as an email to SUGGEST_EMAIL in the
-// visitor's own mail app (mailto:). The address is public in this file. While it's empty
-// the whole feature stays hidden: the CTA under the Pepite list, and the "Suggeriscila"
-// buttons in the Pepite and global-search no-results states.
-const SUGGEST_EMAIL = '';
+// The form is sent as JSON to backend/suggest_pepita.py (see backend/README.md), which
+// emails it to the curator over SMTP. SUGGEST_ENDPOINT is that script's URL — relative
+// to the app (e.g. 'backend/suggest_pepita.py') or absolute. While it's empty the whole
+// feature stays hidden: the CTA under the Pepite list, and the "Suggeriscila" buttons in
+// the Pepite and global-search no-results states.
+const SUGGEST_ENDPOINT = '';
 
 let _suggestOpener = null; // element to give focus back to on close
 
 function setupSuggestPepita() {
   const cta = document.getElementById('suggestPepitaCta');
   if (cta) {
-    cta.style.display = SUGGEST_EMAIL ? 'flex' : 'none';
+    cta.style.display = SUGGEST_ENDPOINT ? 'flex' : 'none';
     cta.addEventListener('click', () => openSuggestPepita());
   }
   const overlay = document.getElementById('suggestOverlay');
@@ -4617,7 +4624,7 @@ function _trapFocus(e, root) {
 const _closeIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>';
 
 function openSuggestPepita(prefill = {}) {
-  if (!SUGGEST_EMAIL) return;
+  if (!SUGGEST_ENDPOINT) return;
   const overlay = document.getElementById('suggestOverlay');
   const panel   = document.getElementById('suggestPanel');
   if (!overlay || !panel) return;
@@ -4643,41 +4650,59 @@ function openSuggestPepita(prefill = {}) {
         <input name="link" maxlength="300" inputmode="url" autocomplete="off" placeholder="instagram.com/…"></label>
       <label class="suggest-field"><span>${escapeHtml(t('suggestAutore'))} ${opt}</span>
         <input name="autore" maxlength="80" autocomplete="name"></label>
+      <!-- Honeypot: invisible to people, bots fill it in and the server drops the submission -->
+      <label class="suggest-hp" aria-hidden="true">Website <input name="website" tabindex="-1" autocomplete="off"></label>
       <p class="suggest-error" id="suggestError" role="alert" hidden></p>
       <button type="submit" class="btn-action btn-main">${escapeHtml(t('suggestSubmit'))}</button>
     </form>`;
 
   const form = panel.querySelector('#suggestForm');
+  const errEl = panel.querySelector('#suggestError');
+  const submitBtn = form.querySelector('button[type=submit]');
+  const openedAt = Date.now();
+  const showError = msg => { errEl.textContent = msg; errEl.hidden = false; };
   form.elements.nome.value = prefill.nome || '';
-  form.addEventListener('input', () => { panel.querySelector('#suggestError').hidden = true; });
+  form.addEventListener('input', () => { errEl.hidden = true; });
   panel.querySelector('#suggestClose').addEventListener('click', closeSuggestPepita);
-  form.addEventListener('submit', e => {
+  form.addEventListener('submit', async e => {
     e.preventDefault();
+    if (submitBtn.disabled) return;
     const v = name => form.elements[name].value.trim();
     const missing = !v('nome') ? 'nome' : !v('perche') ? 'perche' : null;
     if (missing) {
-      const err = panel.querySelector('#suggestError');
-      err.textContent = t('suggestRequired');
-      err.hidden = false;
+      showError(t('suggestRequired'));
       form.elements[missing].focus();
       return;
     }
-    const subject = `Nuova pepita: ${v('nome')}`;
-    // Labels in Italian whatever the UI language: the email is read by the curator
-    const line = (label, name) => (v(name) ? [`${label}: ${v(name)}`] : []);
-    const body = [
-      ...line('Nome', 'nome'),
-      ...line('Quartiere', 'quartiere'),
-      '',
-      'Perché è una pepita:',
-      v('perche'),
-      '',
-      ...line('Link', 'link'),
-      ...line('Segnalata da', 'autore'),
-      `(inviata dall'app, lingua ${currentLang.toUpperCase()})`
-    ].join('\n');
-    window.location.href = `mailto:${SUGGEST_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    _renderSuggestDone(panel, `${subject}\n\n${body}`);
+    if (navigator.onLine === false) { showError(t('suggestErrOffline')); return; }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = t('suggestSending');
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 20000);
+    try {
+      const res = await fetch(SUGGEST_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nome: v('nome'), quartiere: v('quartiere'), perche: v('perche'),
+          link: v('link'), autore: v('autore'), website: form.elements.website.value,
+          lang: currentLang, elapsed: Date.now() - openedAt
+        }),
+        signal: ctrl.signal
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok) { _renderSuggestDone(panel); return; }
+      showError(res.status === 429 ? t('suggestErrRate') : t('suggestErrGeneric'));
+    } catch (err) {
+      showError(navigator.onLine === false ? t('suggestErrOffline') : t('suggestErrGeneric'));
+    } finally {
+      clearTimeout(timer);
+      if (document.contains(submitBtn)) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = t('suggestSubmit');
+      }
+    }
   });
 
   overlay.style.display = 'flex';
@@ -4685,29 +4710,26 @@ function openSuggestPepita(prefill = {}) {
   setTimeout(() => (prefill.nome ? form.elements.quartiere : form.elements.nome).focus(), 50);
 }
 
-// After the mail app has been opened: thanks + a copy-the-text fallback for visitors
-// without a configured mail client.
-function _renderSuggestDone(panel, text) {
+// Sent: thanks, and a shortcut to suggest another place.
+function _renderSuggestDone(panel) {
   panel.innerHTML = `
     <div class="suggest-head">
       <h3 id="suggestTitle">${escapeHtml(t('suggestDoneTitle'))}</h3>
       <button type="button" class="global-search-close" id="suggestClose" aria-label="${escapeHtml(t('suggestClose'))}">${_closeIcon}</button>
     </div>
     <div class="suggest-form">
-      <p class="suggest-intro">${escapeHtml(t('suggestDoneText', SUGGEST_EMAIL))}</p>
+      <p class="suggest-intro" role="status">${escapeHtml(t('suggestDoneText'))}</p>
       <div class="suggest-done-actions">
-        <button type="button" class="btn-action btn-secondary" id="suggestCopy">${escapeHtml(t('suggestCopy'))}</button>
+        <button type="button" class="btn-action btn-secondary" id="suggestAnother">${escapeHtml(t('suggestAnother'))}</button>
         <button type="button" class="btn-action btn-main" id="suggestDoneClose">${escapeHtml(t('suggestClose'))}</button>
       </div>
     </div>`;
   panel.querySelector('#suggestClose').addEventListener('click', closeSuggestPepita);
   panel.querySelector('#suggestDoneClose').addEventListener('click', closeSuggestPepita);
-  const copyBtn = panel.querySelector('#suggestCopy');
-  copyBtn.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      copyBtn.textContent = t('suggestCopied');
-    } catch (e) { /* clipboard blocked — the email address is in the text above */ }
+  panel.querySelector('#suggestAnother').addEventListener('click', () => {
+    const opener = _suggestOpener; // keep the original opener for focus on close
+    openSuggestPepita();
+    _suggestOpener = opener;
   });
   panel.querySelector('#suggestDoneClose').focus();
 }
@@ -4860,7 +4882,7 @@ function renderGlobalSearchResults(rawQuery) {
   if (totalCount === 0) {
     const q = rawQuery.trim();
     container.innerHTML = `<div class="gs-empty">${isEn ? `No results for "${escapeHtml(q)}"` : `Nessun risultato per "${escapeHtml(q)}"`}
-      ${SUGGEST_EMAIL ? `<button type="button" class="empty-suggest-btn" data-nome="${escapeHtml(q)}">💡 ${escapeHtml(t('suggestFromSearch'))}</button>` : ''}</div>`;
+      ${SUGGEST_ENDPOINT ? `<button type="button" class="empty-suggest-btn" data-nome="${escapeHtml(q)}">💡 ${escapeHtml(t('suggestFromSearch'))}</button>` : ''}</div>`;
     container.querySelector('.empty-suggest-btn')?.addEventListener('click', () => {
       closeGlobalSearch();
       openSuggestPepita({ nome: q });

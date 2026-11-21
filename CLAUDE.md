@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-"Pepite per Tutti" (Milano Pepite) — a static, no-build, vanilla-JS Progressive Web App that shows a curated map of hidden gems ("pepite"), events ("eventi"), itineraries, and editorial stories ("storie") in Milan, on top of Leaflet. Italian is the primary language, with an English translation layer (`i18n` object in `app.js`). There is no frontend framework, no bundler, and no package.json — the app is six flat files served as-is.
+"Pepite per Tutti" (Milano Pepite) — a static, no-build, vanilla-JS Progressive Web App that shows a curated map of hidden gems ("pepite"), events ("eventi"), itineraries, and editorial stories ("storie") in Milan, on top of Leaflet. Italian is the primary language, with an English translation layer (`i18n` object in `app.js`). There is no frontend framework, no bundler, and no package.json — the app is six flat files served as-is, plus one small Python script in `backend/` for the only server-side feature (emailing "Suggerisci una pepita" submissions).
 
 ## Files
 
@@ -14,6 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `data.json` — the "pepite" (places) dataset, an array of place objects (id, nome, categoria/categoria_en, quartiere, descrizione/descrizione_en, indirizzo, orari, prezzo, lat/lng, immagine, credit_immagine, fonti, salvato).
 - `eventi.json` — the events dataset (id, giorno/mese, titolo/titolo_en, descrizione*, badge, tag/tag_en, quartiere, luogo, orario, prezzo, lat/lng, url, category).
 - `sw.js` — the service worker (offline caching, PWA install, push-style notification handling).
+- `backend/suggest_pepita.py` — receives the "Suggerisci una pepita" form and emails it over SMTP (stdlib only; runs as WSGI, CGI or a local dev server). `backend/README.md` has the configuration and deploy steps, `backend/test_suggest_pepita.py` its tests.
 
 Referenced by `index.html`/`app.js` but **not present in this repo**: `manifest.json`, `storie.json`, `icons/`, and the `img/` assets — these exist on the deployed host (`ilariavita.com/map/`) but aren't checked in here. Don't assume they exist locally; features that depend on them (e.g. "Diario" stories) will fail gracefully client-side (see `_storieLoadFailed` in `app.js`) but you can't test them without adding those files.
 
@@ -25,8 +26,9 @@ There is no build, lint, or test tooling in this repo (no package.json, no test 
 
 - Serve the directory with any static file server from the repo root, e.g. `python3 -m http.server 8000`, then open `http://localhost:8000/`.
 - The service worker (`sw.js`) hardcodes `/beta/` as its scope prefix for cached asset paths (`ASSETS` array) — if you serve from a different path/port, cache-first behavior for the app shell won't match. When testing SW/offline behavior specifically, either serve under a `/beta/` path or adjust `ASSETS` temporarily (don't commit that adjustment unless the deploy path is actually changing).
-- Cache-busting: `styles.css` and `app.js` are referenced from `index.html` with `?v=N` query strings (currently `styles.css?v=31`, `app.js?v=98`). **Bump these version numbers whenever you change `styles.css` or `app.js`**, or returning visitors' service-worker/browser caches will keep serving stale code.
-- No automated tests exist. Verify changes manually in a browser (desktop + mobile viewport — the layout has distinct mobile behavior for the sidebar/detail panel).
+- Cache-busting: `styles.css` and `app.js` are referenced from `index.html` with `?v=N` query strings (currently `styles.css?v=32`, `app.js?v=99`). **Bump these version numbers whenever you change `styles.css` or `app.js`**, or returning visitors' service-worker/browser caches will keep serving stale code.
+- The frontend has no automated tests. Verify changes manually in a browser (desktop + mobile viewport — the layout has distinct mobile behavior for the sidebar/detail panel).
+- The backend script has unit tests, including an SMTP round-trip against a throwaway local server: `python3 -m unittest discover backend`. To try the form end to end locally, run `SUGGEST_DRY_RUN=1 MAIL_TO=a@b.c MAIL_FROM=a@b.c ALLOWED_ORIGINS=http://localhost:8000 python3 backend/suggest_pepita.py 8001` (prints the email instead of sending it) and temporarily point `SUGGEST_ENDPOINT` at `http://127.0.0.1:8001/`.
 
 ## Architecture
 
@@ -60,7 +62,7 @@ A pepita shows, under its name, a live status pill (`getOpenStatus()`: "Aperto �
 When the Pepite or Eventi tab search finds nothing, the empty state offers `_searchEverywhereBtn(query)`, which opens the global search pre-filled (`openGlobalSearch(prefill)`) and shows how many results it will find — counted with `_globalSearchMatches()`, the same matcher the overlay renders from, so the two can't disagree. When every event in `eventi.json` is past, `renderEventi()` shows `_noUpcomingEventsHTML()` (when the last one ended + a link back to the Pepite tab) instead of the generic "remove filters" state, whatever filters are active.
 
 ### Suggerisci una pepita
-No backend: `openSuggestPepita()` renders a form in `#suggestOverlay` (reusing the global-search overlay/panel shell) and on submit opens a `mailto:` to `SUGGEST_EMAIL` with the suggestion pre-written (labels always in Italian, for the curator), then shows a thank-you step with a copy-the-text fallback. **`SUGGEST_EMAIL` is empty in the repo, and while it is the whole feature is hidden** — the `#suggestPepitaCta` card under the Pepite list and the "Suggeriscila" buttons in the Pepite / global-search no-results states. The overlay traps Tab focus (`_trapFocus`), closes on Escape and returns focus to its opener.
+`openSuggestPepita()` renders an embedded form in `#suggestOverlay` (reusing the global-search overlay/panel shell) and POSTs it as JSON (`nome`, `quartiere`, `perche`, `link`, `autore`, `lang`, plus the `website` honeypot and `elapsed` ms since the form opened) to `SUGGEST_ENDPOINT`, i.e. `backend/suggest_pepita.py`, which validates it, rate-limits per IP and emails the curator over SMTP (email labels always in Italian). The form shows inline errors for offline / 429 / anything else and a thank-you step on `{ok: true}`. **`SUGGEST_ENDPOINT` is empty in the repo, and while it is the whole feature is hidden** — the `#suggestPepitaCta` card under the Pepite list and the "Suggeriscila" buttons in the Pepite / global-search no-results states. The overlay traps Tab focus (`_trapFocus`), closes on Escape and returns focus to its opener. The script's SMTP settings come from environment variables (never commit them); the bot checks (honeypot, < 3 s fill time) answer `{ok: true}` without sending, so if you change the payload keep those two fields.
 
 ### Mood Matcher
 A separate self-contained wizard (`setupMoodMatcher`/`renderMoodStep`/`renderMoodResult`) that scores pepite against user answers using weight tables (`moodWeights`, `atmosferaWeights`, `tempoCount`, `moodStartHour`, `moodGap`) to build a personalized mini-itinerary, then plots it on the map via `showMoodResultOnMap`. It's opened both from the small `#btnSurprise` map-control icon and from the more prominent `#moodMatcherBtn` CTA card under the Pepite tab's price filter (both wired in `setupMoodMatcher()` — keep the `#moodMatcherBtn` element in `index.html` in sync with the listener, since a mismatch silently no-ops).
