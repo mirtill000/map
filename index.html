@@ -33,7 +33,7 @@
         integrity="sha512-mQ77VzAakzdpWdgfL/lM1ksNy89uFgibRQANsNneSTMD/bj0Y/8+94XMwYhnbzx8eki2hrbPpDm0vD0CiT2lcg==" crossorigin="anonymous" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css"
         integrity="sha512-6ZCLMiYwTeli2rVh3XAPxy3YoR5fVxGdH/pz+KMCzRY2M65Emgkw00Yqmhh8qLGeYQ3LbVZGdmOX9KUjSKr0TA==" crossorigin="anonymous" />
-  <link rel="stylesheet" href="styles.css?v=29">
+  <link rel="stylesheet" href="styles.css?v=30">
 
   <title>Mappa - Pepite per Tutti</title>
   
@@ -132,11 +132,13 @@
             </button>
           </div>
 
-          <!-- Mobile only: curated preview shown at the sheet's "editorial" resting height,
-               between the quick filters and the raw category/list — see setupMobileSheet -->
+          <!-- Editorial preview: "Pepita del giorno" at every width; the Diario teaser and My Day
+               CTA are mobile only, shown at the sheet's "editorial" resting height — see setupMobileSheet -->
           <div class="mobile-editorial-preview" id="mobileEditorialPreview">
-            <div class="med-daily" id="medDaily" style="display:none">
-              <span>✨</span><span id="medDailyText"></span>
+            <div class="med-daily" id="medDaily" role="button" tabindex="0" style="display:none">
+              <span class="med-daily-thumb" id="medDailyThumb" aria-hidden="true">✨</span>
+              <span class="med-daily-text" id="medDailyText"></span>
+              <span class="med-daily-go" aria-hidden="true">→</span>
             </div>
             <div class="med-stories" id="medStories" style="display:none">
               <span class="section-label" id="medStoriesLabel"></span>
@@ -150,8 +152,7 @@
 
           <!-- Categories -->
           <div class="sidebar-section sidebar-categories">
-            <span class="section-label">Categorie</span>
-            <nav class="cat-nav" id="catNav">
+            <nav class="cat-nav" id="catNav" aria-label="Categorie">
               <div class="cat-item active" data-cat="all">
                 <span class="cat-emoji">✨</span>
                 <span class="cat-text">Tutte le Pepite</span>
@@ -345,9 +346,6 @@
         </button>
       </div>
 
-      <!-- Pepita del Giorno — editorial floating card -->
-      <div class="daily-card" id="dailyCard" role="button" tabindex="0" aria-label="Pepita del Giorno"></div>
-
     </main>
 
     <!-- ═══ RIGHT DETAIL PANEL ═══ -->
@@ -374,21 +372,44 @@
       <div class="detail-body">
         <span class="detail-meta" id="detailMeta"></span>
         <h2 id="detailNome"></h2>
+        <!-- Pepita mode: status / quartiere pills (see renderDetailFacts in app.js) -->
+        <div class="detail-facts" id="detailFacts" style="display:none"></div>
         <div class="detail-location">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
           <span id="detailQuartiere"></span>
         </div>
-        <a class="detail-indirizzo" id="detailIndirizzo" style="display:none" target="_blank" rel="noopener">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-          <span id="detailIndirizzoText"></span>
-        </a>
         <div class="detail-orari" id="detailOrari" style="display:none">
           <span id="detailOrariText"></span>
         </div>
         <p class="detail-prezzo" id="detailPrezzo"></p>
         <!-- Quartiere mode: top categories -->
         <div class="quartiere-cats" id="quartiereCats" style="display:none"></div>
+        <!-- Primary action (.btn-main) is set per mode by setDetailPrimaryAction() -->
+        <div class="detail-actions">
+          <button class="btn-action btn-main" id="detailDirectionsBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
+            Indicazioni
+          </button>
+          <button class="btn-action btn-secondary" id="detailShareBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
+            Condividi
+          </button>
+          <button class="btn-action btn-secondary" id="detailMapsBtn" style="display:none">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Apri in Maps
+          </button>
+        </div>
+        <a class="detail-indirizzo" id="detailIndirizzo" style="display:none" target="_blank" rel="noopener">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span id="detailIndirizzoText"></span>
+        </a>
         <p class="detail-descrizione" id="detailDescrizione"></p>
+
+        <!-- Pepita mode: weekly opening hours, today highlighted -->
+        <div class="detail-hours" id="detailHours" style="display:none"></div>
+
+        <!-- Quartiere mode: every pepita in the neighbourhood -->
+        <div class="quartiere-list" id="quartiereList" style="display:none"></div>
 
         <!-- Linked events (shown when this pepita hosts an event) -->
         <div class="detail-linked-events" id="detailLinkedEvents" style="display:none">
@@ -399,20 +420,6 @@
         <!-- Fonti: social / website bento-box chips -->
         <div class="detail-fonti" id="detailFonti" style="display:none"></div>
 
-        <div class="detail-actions">
-          <button class="btn-action btn-secondary" id="detailMapsBtn" style="display:none">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            Apri in Maps
-          </button>
-          <button class="btn-action btn-main" id="detailShareBtn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></svg>
-            Condividi
-          </button>
-          <button class="btn-action btn-secondary" id="detailDirectionsBtn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
-            Indicazioni
-          </button>
-        </div>
       </div>
     </aside>
 
@@ -519,6 +526,6 @@
           integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"
           integrity="sha512-OFs3W4DIZ5ZkrDhBFtsCP6JXtMEDGmhl0QPlmWYBJay40TT1n3gt2Xuw8Pf/iezgW9CdabjkNChRqozl/YADmg==" crossorigin="anonymous"></script>
-  <script src="app.js?v=96"></script>
+  <script src="app.js?v=97"></script>
 </body>
 </html>
